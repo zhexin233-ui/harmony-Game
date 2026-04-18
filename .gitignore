@@ -1,0 +1,24 @@
+# 系统
+.DS_Store
+*.log
+
+# 依赖
+node_modules/
+
+# 构建
+dist/
+unpackage/
+.hbuilderx/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*~
+
+# uni-app x
+.cache/
+.uni/
+
+# superpowers 视觉伴侣草图（本地产物）
+.superpowers/
