@@ -1,12 +1,6 @@
 {
 	"pages": [ //pages数组中第一项表示应用启动页，参考：https://doc.dcloud.net.cn/uni-app-x/collocation/pagesjson.html
 		{
-			"path": "pages/spike/index",
-			"style": {
-				"navigationBarTitleText": "Spike"
-			}
-		},
-		{
 			"path": "pages/onboarding/index",
 			"style": {
 				"navigationStyle": "custom"

@@ -32,4 +32,13 @@ describe('applyTheme', () => {
       expect(recorded[tokenToCssVar(key)]).toBe(value)
     })
   })
+
+  it('把 neon 的 warn/urgent/armedBg/signalBg/emojiShadow 也写入', () => {
+    applyTheme('neon', fakeRoot as unknown as HTMLElement)
+    expect(recorded['--warn']).toBe(themes.neon.warn)
+    expect(recorded['--urgent']).toBe(themes.neon.urgent)
+    expect(recorded['--armed-bg']).toBe(themes.neon.armedBg)
+    expect(recorded['--signal-bg']).toBe(themes.neon.signalBg)
+    expect(recorded['--emoji-shadow']).toBe(themes.neon.emojiShadow)
+  })
 })

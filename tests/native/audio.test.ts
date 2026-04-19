@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useSettings } from '@/stores/settings'
 import { preload, play } from '@/native/audio'
+import { GAME_SOUNDS } from '@/utils/game-sounds'
 
 describe('audio', () => {
   let playMock: ReturnType<typeof vi.fn>
@@ -50,5 +51,24 @@ describe('audio', () => {
     s.soundEnabled = true
     expect(() => play('notfound' as any)).not.toThrow()
     expect(playMock).not.toHaveBeenCalled()
+  })
+})
+
+describe('preload(GAME_SOUNDS)', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    ;(uni.createInnerAudioContext as any) = vi.fn(() => ({
+      play: vi.fn(), stop: vi.fn(), destroy: vi.fn(),
+      onPlay: vi.fn(), onEnded: vi.fn(), onError: vi.fn(),
+      src: ''
+    }))
+  })
+
+  it('为 8 个 ID 各创建一个 audioContext', () => {
+    const createSpy = (globalThis as any).uni.createInnerAudioContext as ReturnType<typeof vi.fn>
+    createSpy.mockClear()
+    preload(GAME_SOUNDS)
+    expect(createSpy).toHaveBeenCalledTimes(Object.keys(GAME_SOUNDS).length)
+    expect(Object.keys(GAME_SOUNDS).length).toBe(8)
   })
 })

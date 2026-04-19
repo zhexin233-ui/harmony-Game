@@ -3,25 +3,39 @@
 		<text class="title">选一个心情开始</text>
 		<text class="subtitle">稍后可在设置里切换</text>
 		<view class="choices">
-			<view class="card cartoon" @tap="pick('cartoon')">
+			<view class="card" :style="cartoonCardStyle" @tap="pick('cartoon')">
 				<text class="emoji">🎈</text>
 				<text class="name">Q 版卡通</text>
 				<text class="desc">暖色 · 圆润 · 漫画感</text>
 			</view>
-			<view class="card neon" @tap="pick('neon')">
-				<text class="emoji">⚡</text>
-				<text class="name">霓虹电玩</text>
-				<text class="desc">深色 · 柔光 · 赛博感</text>
+			<view class="card" :style="neonCardStyle" @tap="pick('neon')">
+				<text class="emoji" :style="neonEmojiStyle">⚡</text>
+				<text class="name" :style="neonNameStyle">霓虹电玩</text>
+				<text class="desc" :style="neonDescStyle">深色 · 柔光 · 赛博感</text>
 			</view>
 		</view>
 	</view>
 </template>
 
 <script setup lang="uts">
+	import { computed } from 'vue'
 	import { useSettings } from '@/stores/settings'
-	import type { Theme } from '@/theme/tokens'
+	import { themes, type Theme } from '@/theme/tokens'
 
 	const settings = useSettings()
+
+	const cartoonCardStyle = computed(() => ({
+		backgroundColor: themes.cartoon.primary,
+		borderWidth: '0px'
+	}))
+	const neonCardStyle = computed(() => ({
+		backgroundColor: themes.neon.bg,
+		borderWidth: '1px',
+		borderColor: themes.neon.primary
+	}))
+	const neonEmojiStyle = computed(() => ({ textShadow: themes.neon.emojiShadow }))
+	const neonNameStyle = computed(() => ({ color: themes.neon.primary }))
+	const neonDescStyle = computed(() => ({ color: themes.neon.textMuted }))
 
 	function pick(theme : Theme) {
 		settings.setTheme(theme)
@@ -40,16 +54,6 @@
 		border-radius: 16px;
 		align-items: center;
 		margin-top: 14px;
-	}
-	.cartoon {
-		background-image: linear-gradient(135deg, #FFB347, #FF6B9D);
-		background-color: #FF6B9D;
-	}
-	.neon {
-		background-image: linear-gradient(135deg, #0A1428, #0E1A2B);
-		background-color: #0A1428;
-		border-width: 1px;
-		border-color: #00D4FF;
 	}
 	.emoji { font-size: 44px; }
 	.name {
