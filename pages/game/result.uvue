@@ -1,16 +1,16 @@
 <template>
 	<view class="container">
 		<text class="title">本局结果</text>
-		<text class="loser">{{ loserName }} 输啦！</text>
+		<text class="loser" :style="loserStyle">{{ loserName }} 输啦！</text>
 
-		<view v-if="punishment !== ''" class="card">
-			<text class="label">抽到的惩罚</text>
+		<view v-if="punishment !== ''" class="card anim-fade-in" :style="cardStyle">
+			<text class="label" :style="mutedStyle">抽到的惩罚</text>
 			<text class="punishment">{{ punishment }}</text>
 		</view>
-		<view v-else class="empty">
+		<view v-else class="empty anim-fade-in" :style="emptyStyle">
 			<text class="empty-emoji">📭</text>
 			<text class="empty-title">惩罚库为空</text>
-			<text class="empty-desc">启用至少一条规则，才能抽惩罚。</text>
+			<text class="empty-desc" :style="mutedStyle">启用至少一条规则，才能抽惩罚。</text>
 			<AppButton label="去管理惩罚规则" variant="primary" @tap="toPunishment" />
 		</view>
 
@@ -21,12 +21,22 @@
 </template>
 
 <script setup lang="uts">
+	import { computed } from 'vue'
 	import AppButton from '@/components/AppButton.uvue'
 	import { useSession, type GameId } from '@/stores/session'
 	import { usePunishment } from '@/stores/punishment'
+	import { useSettings } from '@/stores/settings'
+	import { themes } from '@/theme/tokens'
 
 	const session = useSession()
 	const punishmentStore = usePunishment()
+	const settings = useSettings()
+	const tokens = computed(() => themes[settings.theme])
+
+	const loserStyle = computed(() => ({ color: tokens.value.danger }))
+	const cardStyle = computed(() => ({ backgroundColor: tokens.value.bgEnd }))
+	const emptyStyle = computed(() => ({ backgroundColor: tokens.value.bgEnd }))
+	const mutedStyle = computed(() => ({ color: tokens.value.textMuted }))
 
 	// 入口只抽一次；写入 session.pickedPunishmentText 便于需要时回显。
 	const picked = punishmentStore.pick()
@@ -81,14 +91,12 @@
 	.loser {
 		font-size: 28px;
 		font-weight: bold;
-		color: var(--danger, #FF6B9D);
 	}
 	.card {
 		width: 100%;
 		padding: 20px;
 		margin: 20px 0;
 		border-radius: 16px;
-		background-color: var(--bg-end, #FFE5F1);
 		align-items: center;
 	}
 	.empty {
@@ -96,7 +104,6 @@
 		padding: 24px;
 		margin: 20px 0;
 		border-radius: 16px;
-		background-color: var(--bg-end, #FFE5F1);
 		align-items: center;
 	}
 	.empty-emoji { font-size: 48px; }
@@ -106,12 +113,10 @@
 		margin-top: 8px;
 	}
 	.empty-desc {
-		color: var(--text-muted, #7A6A87);
 		margin-top: 6px;
 		margin-bottom: 12px;
 		text-align: center;
 	}
-	.label { color: var(--text-muted, #7A6A87); }
 	.punishment {
 		font-size: 20px;
 		font-weight: bold;
