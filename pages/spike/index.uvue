@@ -36,7 +36,18 @@
 			log.value = '异常：' + (e as Error).message
 		}
 	}
-	function testAudio() { log.value = '见 Task 0.4' }
+	function testAudio() {
+		try {
+			const ctx = uni.createInnerAudioContext()
+			ctx.src = '/static/sound/click.mp3'
+			ctx.onPlay(() => { log.value = '音效：开始播放' })
+			ctx.onEnded(() => { log.value = '音效：播放结束' })
+			ctx.onError((err) => { log.value = '音效：错误 ' + JSON.stringify(err) })
+			ctx.play()
+		} catch (e) {
+			log.value = '音效异常：' + (e as Error).message
+		}
+	}
 	function testSensor() { log.value = '见 Task 0.5' }
 	function testMultitouch() { log.value = '请在下方区域多指触摸' }
 
