@@ -29,6 +29,12 @@
 			"style": {
 				"navigationBarTitleText": "人数"
 			}
+		},
+		{
+			"path": "pages/lobby/player-names",
+			"style": {
+				"navigationBarTitleText": "玩家名字"
+			}
 		}
 	],
 	"globalStyle": {
