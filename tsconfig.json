@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    },
+    "types": ["node"],
+    "lib": ["ES2020", "DOM"]
+  },
+  "include": [
+    "stores/**/*.ts",
+    "theme/**/*.ts",
+    "native/**/*.ts",
+    "games/**/*.ts",
+    "utils/**/*.ts",
+    "data/**/*.ts",
+    "tests/**/*.ts"
+  ],
+  "exclude": ["node_modules", ".worktrees", "unpackage"]
+}

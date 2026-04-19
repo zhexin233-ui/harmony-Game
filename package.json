@@ -1,0 +1,21 @@
+{
+  "name": "hwgame",
+  "version": "0.1.0",
+  "description": "鸿蒙派对小游戏",
+  "private": true,
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui"
+  },
+  "dependencies": {
+    "pinia": "^3.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "@vitest/coverage-v8": "^4.1.4",
+    "@vitest/ui": "^4.1.4",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.4"
+  }
+}
