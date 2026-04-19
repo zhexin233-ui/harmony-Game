@@ -1,0 +1,198 @@
+<template>
+	<view class="container" :class="{ bite: state === 'trapTriggered' }">
+		<text class="big">🐊</text>
+		<text class="title">鳄鱼拔牙</text>
+
+		<view v-if="state === 'ready'" class="ready">
+			<text class="hint">共 {{ snap?.totalTeeth ?? 0 }} 颗牙，有 1 颗是陷阱</text>
+			<AppButton label="开始" variant="primary" @tap="onStart" />
+		</view>
+
+		<view v-else-if="state === 'playing'" class="playing">
+			<text class="current">
+				当前回合：{{ session.displayNameOf(snap?.currentPlayer ?? 0) }}
+			</text>
+			<view class="teeth-grid">
+				<view
+					v-for="i in snap?.totalTeeth ?? 0"
+					:key="i"
+					class="tooth"
+					:class="{ pressed: isPressed(i - 1) }"
+					@tap="onTapTooth(i - 1)"
+				>
+					<text class="tooth-emoji">{{ isPressed(i - 1) ? '⬜' : '🦷' }}</text>
+				</view>
+			</view>
+		</view>
+
+		<view v-else-if="state === 'trapTriggered'" class="trap">
+			<text class="bite-text">咔嚓！{{ session.displayNameOf(snap?.result?.loser ?? 0) }} 被咬了！</text>
+			<AppButton label="查看结果" variant="primary" @tap="goResult" />
+		</view>
+
+		<AppButton label="返回大厅" variant="ghost" @tap="onExit" />
+
+		<GamePausedOverlay
+			:visible="paused"
+			desc="已暂停，是否继续？"
+			@resume="onResume"
+			@restart="onRestart"
+			@exit="onExit"
+		/>
+	</view>
+</template>
+
+<script setup lang="uts">
+	import { ref, computed } from 'vue'
+	import AppButton from '@/components/AppButton.uvue'
+	import GamePausedOverlay from '@/components/GamePausedOverlay.uvue'
+	import { useSession } from '@/stores/session'
+	import { createCrocodileGame, type CrocodileGame, type CrocodileSnapshot } from '@/games/crocodile/logic'
+	import { preload, play } from '@/native/audio'
+	import { vibrateShort, vibrateLong } from '@/native/vibrator'
+	import { keepAwake, releaseAwake } from '@/native/screen'
+	import { GAME_SOUNDS } from '@/utils/game-sounds'
+
+	const session = useSession()
+	const game = ref<CrocodileGame | null>(null)
+	const snap = ref<CrocodileSnapshot | null>(null)
+	const paused = ref(false)
+
+	const state = computed(() => snap.value?.state ?? 'ready')
+
+	function update() {
+		snap.value = game.value!.getSnapshot()
+	}
+
+	function isPressed(idx : number) : boolean {
+		return snap.value?.pressedTeeth?.includes(idx) ?? false
+	}
+
+	function init() {
+		const count = session.playerCount > 0 ? session.playerCount : 2
+		game.value = createCrocodileGame({ playerCount: count })
+		update()
+	}
+
+	function onStart() {
+		play('click')
+		game.value?.start()
+		update()
+	}
+
+	function onTapTooth(idx : number) {
+		if (snap.value?.state !== 'playing') return
+		if (isPressed(idx)) return
+		game.value?.tapTooth(idx)
+		update()
+		const s = snap.value!
+		if (s.state === 'trapTriggered') {
+			vibrateLong()
+			play('bite')
+			session.loser = s.result!.loser
+		} else {
+			vibrateShort()
+			play('click')
+		}
+	}
+
+	function goResult() {
+		releaseAwake()
+		uni.redirectTo({ url: '/pages/game/result' })
+	}
+
+	function onResume() { paused.value = false }
+
+	function onRestart() {
+		paused.value = false
+		init()
+	}
+
+	function onExit() {
+		paused.value = false
+		releaseAwake()
+		session.exitToLobby()
+		uni.redirectTo({ url: '/pages/lobby/games' })
+	}
+
+	onLoad(() => {
+		preload(GAME_SOUNDS)
+		keepAwake()
+		init()
+	})
+
+	onUnload(() => {
+		releaseAwake()
+	})
+
+	onHide(() => {
+		if (snap.value?.state === 'playing') {
+			paused.value = true
+		}
+	})
+</script>
+
+<style>
+	.container {
+		padding: 24px 16px;
+		min-height: 100vh;
+		align-items: center;
+		background-color: #FFF5EB;
+	}
+	.container.bite { background-color: #FFB0B0; }
+	.big {
+		font-size: 100px;
+		margin-top: 16px;
+	}
+	.title {
+		font-size: 22px;
+		font-weight: bold;
+		margin-top: 8px;
+	}
+	.ready {
+		align-items: center;
+		margin-top: 16px;
+	}
+	.playing {
+		align-items: center;
+		margin-top: 16px;
+		width: 100%;
+	}
+	.current {
+		font-size: 18px;
+		font-weight: bold;
+		margin: 12px 0;
+		color: #FF6B9D;
+	}
+	.teeth-grid {
+		flex-direction: row;
+		flex-wrap: wrap;
+		justify-content: center;
+		width: 100%;
+	}
+	.tooth {
+		width: 60px;
+		height: 60px;
+		margin: 6px;
+		border-radius: 12px;
+		background-color: #FFE5F1;
+		align-items: center;
+		justify-content: center;
+	}
+	.tooth.pressed { opacity: 0.35; }
+	.tooth-emoji { font-size: 32px; }
+	.hint {
+		color: #7A6A87;
+		margin: 12px 0;
+	}
+	.trap {
+		align-items: center;
+		margin-top: 24px;
+	}
+	.bite-text {
+		font-size: 22px;
+		font-weight: bold;
+		color: #FF6B9D;
+		margin: 16px 0;
+	}
+</style>
