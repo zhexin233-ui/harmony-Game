@@ -1,0 +1,64 @@
+<template>
+	<view class="container">
+		<text class="big">{{ emoji }}</text>
+		<text class="title">{{ name }}</text>
+		<text class="note">此游戏将在 Plan 2 中实现。</text>
+		<AppButton label="🎲 模拟：随机一人输" @tap="simulateLose" />
+		<AppButton label="返回大厅" variant="ghost" @tap="back" />
+	</view>
+</template>
+
+<script setup lang="uts">
+	import AppButton from '@/components/AppButton.uvue'
+	import { useSession, type GameId } from '@/stores/session'
+
+	type GameMeta = { emoji : string; name : string }
+
+	const session = useSession()
+	const emoji = ref('🎮')
+	const name = ref('游戏')
+
+	const meta : Record<GameId, GameMeta> = {
+		'bomb': { emoji: '💣', name: '定时炸弹' },
+		'crocodile': { emoji: '🐊', name: '鳄鱼拔牙' },
+		'wheel': { emoji: '🎯', name: '指尖大轮盘' },
+		'horse-race': { emoji: '🐎', name: '摇一摇赛马' },
+		'reaction': { emoji: '👆', name: '同屏反应大比拼' }
+	}
+
+	onLoad((query) => {
+		const raw = (query?.id ?? session.currentGame) as GameId | null
+		if (raw != null && meta[raw] != null) {
+			emoji.value = meta[raw].emoji
+			name.value = meta[raw].name
+			session.currentGame = raw
+		}
+	})
+
+	function simulateLose() {
+		const count = session.playerCount > 0 ? session.playerCount : 1
+		session.loser = Math.floor(Math.random() * count)
+		uni.navigateTo({ url: '/pages/game/result' })
+	}
+	function back() {
+		session.exitToLobby()
+		uni.navigateBack({})
+	}
+</script>
+
+<style>
+	.container {
+		padding: 32px;
+		align-items: center;
+	}
+	.big { font-size: 80px; }
+	.title {
+		font-size: 24px;
+		font-weight: bold;
+		margin-top: 12px;
+	}
+	.note {
+		color: var(--text-muted, #7A6A87);
+		margin: 16px 0;
+	}
+</style>

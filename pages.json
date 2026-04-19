@@ -41,6 +41,18 @@
 			"style": {
 				"navigationBarTitleText": "选游戏"
 			}
+		},
+		{
+			"path": "pages/game/placeholder",
+			"style": {
+				"navigationBarTitleText": "游戏"
+			}
+		},
+		{
+			"path": "pages/game/result",
+			"style": {
+				"navigationBarTitleText": "结算"
+			}
 		}
 	],
 	"globalStyle": {
