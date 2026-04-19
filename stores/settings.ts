@@ -13,7 +13,11 @@ const DEFAULT_SETTINGS: Settings = {
   vibrationEnabled: true
 }
 
-export const useSettings = defineStore('settings', {
+// 注意：不要在模块顶层直接调用 defineStore()。
+// 鸿蒙 ArkCompiler 在循环 import 期间，`defineStore` 绑定仍处于 TDZ，
+// 顶层调用会导致 "ReferenceError: defineStore is not initialized"。
+// 改为首次访问 useSettings() 时才注册 store，打破 TDZ。
+const _factory = () => defineStore('settings', {
   state: () => ({
     ...DEFAULT_SETTINGS,
     hasOnboarded: false
@@ -55,3 +59,10 @@ export const useSettings = defineStore('settings', {
     }
   }
 })
+
+let _hook: ReturnType<typeof _factory> | null = null
+
+export function useSettings() {
+  if (_hook == null) _hook = _factory()
+  return _hook()
+}

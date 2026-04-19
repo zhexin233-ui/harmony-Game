@@ -2,7 +2,8 @@ import { defineStore } from 'pinia'
 
 export type GameId = 'horse-race' | 'bomb' | 'crocodile' | 'reaction' | 'wheel'
 
-export const useSession = defineStore('session', {
+// 惰性工厂：见 stores/settings.ts 注释
+const _factory = () => defineStore('session', {
   state: () => ({
     playerCount: 0,
     playerNames: undefined as string[] | undefined,
@@ -37,3 +38,10 @@ export const useSession = defineStore('session', {
     }
   }
 })
+
+let _hook: ReturnType<typeof _factory> | null = null
+
+export function useSession() {
+  if (_hook == null) _hook = _factory()
+  return _hook()
+}

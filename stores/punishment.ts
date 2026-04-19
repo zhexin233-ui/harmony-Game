@@ -37,7 +37,8 @@ function merge(stored: StoredPunishments): PunishmentRule[] {
   return result
 }
 
-export const usePunishment = defineStore('punishment', {
+// 惰性工厂：见 stores/settings.ts 注释
+const _factory = () => defineStore('punishment', {
   state: () => ({
     rules: [] as PunishmentRule[],
     deletedBuiltinIds: [] as string[]
@@ -105,3 +106,10 @@ export const usePunishment = defineStore('punishment', {
     }
   }
 })
+
+let _hook: ReturnType<typeof _factory> | null = null
+
+export function usePunishment() {
+  if (_hook == null) _hook = _factory()
+  return _hook()
+}
