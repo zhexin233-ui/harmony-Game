@@ -1,0 +1,61 @@
+<template>
+	<view v-if="visible" class="overlay">
+		<view class="card" :style="cardStyle">
+			<text class="title" :style="textStyle">⏸ 已暂停</text>
+			<text class="desc" :style="mutedStyle">{{ desc ?? '已暂停，选择下一步' }}</text>
+			<AppButton label="继续" variant="primary" @tap="emit('resume')" />
+			<AppButton label="重来本局" variant="ghost" @tap="emit('restart')" />
+			<AppButton label="回大厅" variant="ghost" @tap="emit('exit')" />
+		</view>
+	</view>
+</template>
+
+<script setup lang="uts">
+	import { computed } from 'vue'
+	import AppButton from '@/components/AppButton.uvue'
+	import { useSettings } from '@/stores/settings'
+	import { themes } from '@/theme/tokens'
+
+	const props = defineProps<{
+		visible : boolean
+		desc ?: string
+	}>()
+	const emit = defineEmits<{
+		(e : 'resume') : void
+		(e : 'restart') : void
+		(e : 'exit') : void
+	}>()
+
+	const settings = useSettings()
+	const tokens = computed(() => themes[settings.theme])
+	const cardStyle = computed(() => ({ backgroundColor: tokens.value.bg }))
+	const textStyle = computed(() => ({ color: tokens.value.text }))
+	const mutedStyle = computed(() => ({ color: tokens.value.textMuted }))
+</script>
+
+<style>
+	.overlay {
+		position: fixed;
+		left: 0;
+		right: 0;
+		top: 0;
+		bottom: 0;
+		background-color: rgba(0, 0, 0, 0.6);
+		justify-content: center;
+		align-items: center;
+	}
+	.card {
+		width: 280px;
+		padding: 24px;
+		border-radius: 16px;
+		align-items: center;
+	}
+	.title {
+		font-size: 22px;
+		font-weight: bold;
+	}
+	.desc {
+		margin: 8px 0 16px 0;
+		text-align: center;
+	}
+</style>
