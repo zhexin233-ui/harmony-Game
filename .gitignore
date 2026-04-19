@@ -22,3 +22,6 @@ unpackage/
 
 # superpowers 视觉伴侣草图（本地产物）
 .superpowers/
+
+# git worktree 本地产物
+.worktrees/
