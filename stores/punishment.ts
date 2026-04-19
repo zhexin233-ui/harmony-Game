@@ -52,6 +52,15 @@ export const usePunishment = defineStore('punishment', {
       }
       this.rules = merge(stored)
       this.deletedBuiltinIds = stored.deletedBuiltinIds
+    },
+    pick(): PunishmentRule | null {
+      const pool: PunishmentRule[] = []
+      for (const r of this.rules) {
+        if (r.enabled) pool.push(r)
+      }
+      if (pool.length === 0) return null
+      const idx = Math.floor(Math.random() * pool.length)
+      return pool[idx]
     }
   }
 })

@@ -77,3 +77,48 @@ describe('usePunishment - load & merge', () => {
     expect(b01.text).toBe('学三声狗叫')
   })
 })
+
+describe('usePunishment - pick', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    ;(uni.getStorageSync as any) = (_k: string) => ''
+  })
+
+  it('启用池为空时返回 null', () => {
+    const p = usePunishment()
+    p.load()
+    p.rules.forEach(r => (r.enabled = false))
+    expect(p.pick()).toBeNull()
+  })
+
+  it('启用池只有一条时必定返回该条', () => {
+    const p = usePunishment()
+    p.load()
+    p.rules.forEach(r => (r.enabled = false))
+    p.rules[3].enabled = true
+    const picked = p.pick()
+    expect(picked).not.toBeNull()
+    expect(picked!.id).toBe(p.rules[3].id)
+  })
+
+  it('多条启用时返回的结果在启用池中', () => {
+    const p = usePunishment()
+    p.load()
+    for (let i = 0; i < 100; i++) {
+      const picked = p.pick()
+      expect(picked).not.toBeNull()
+      expect(picked!.enabled).toBe(true)
+    }
+  })
+
+  it('禁用 / 启用变化会立刻反映到抽取池', () => {
+    const p = usePunishment()
+    p.load()
+    p.rules.forEach(r => (r.enabled = false))
+    const target = p.rules.find(r => r.id === 'builtin-07')!
+    target.enabled = true
+    for (let i = 0; i < 20; i++) {
+      expect(p.pick()!.id).toBe('builtin-07')
+    }
+  })
+})
