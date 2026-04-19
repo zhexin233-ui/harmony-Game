@@ -1,0 +1,56 @@
+<template>
+	<view class="container">
+		<text class="title">有几个人玩？</text>
+		<view class="grid">
+			<view v-for="n in counts" :key="n" class="num" :class="{ active: picked === n }" @tap="picked = n">
+				<text>{{ n }}</text>
+			</view>
+		</view>
+		<AppButton label="下一步 · 可选输入名字" variant="primary" :disabled="picked === 0" @tap="next" />
+		<AppButton label="跳过名字 · 直接进大厅" variant="ghost" :disabled="picked === 0" @tap="skip" />
+	</view>
+</template>
+
+<script setup lang="uts">
+	import AppButton from '@/components/AppButton.uvue'
+	import { useSession } from '@/stores/session'
+
+	const counts = [2, 3, 4, 5, 6, 7, 8]
+	const picked = ref(0)
+	const session = useSession()
+
+	function next() {
+		session.setPlayers(picked.value)
+		uni.navigateTo({ url: `/pages/lobby/player-names?count=${picked.value}` })
+	}
+	function skip() {
+		session.setPlayers(picked.value)
+		uni.navigateTo({ url: '/pages/lobby/games' })
+	}
+</script>
+
+<style>
+	.container { padding: 24px; }
+	.title {
+		font-size: 24px;
+		font-weight: bold;
+		text-align: center;
+		margin-bottom: 24px;
+	}
+	.grid {
+		flex-direction: row;
+		flex-wrap: wrap;
+		justify-content: center;
+		margin-bottom: 24px;
+	}
+	.num {
+		width: 56px;
+		height: 56px;
+		border-radius: 28px;
+		margin: 6px;
+		justify-content: center;
+		align-items: center;
+		background-color: var(--bg-end, #FFE5F1);
+	}
+	.num.active { background-color: var(--primary, #FF6B9D); }
+</style>

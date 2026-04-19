@@ -23,6 +23,12 @@
 			"style": {
 				"navigationBarTitleText": "设置"
 			}
+		},
+		{
+			"path": "pages/lobby/player-count",
+			"style": {
+				"navigationBarTitleText": "人数"
+			}
 		}
 	],
 	"globalStyle": {
