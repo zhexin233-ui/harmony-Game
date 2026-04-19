@@ -20,6 +20,9 @@
 	const log = ref('（等待操作）')
 	const touchCount = ref(0)
 
+	let sampleCount = 0
+	let peakMagnitude = 0
+
 	function testVibrate() {
 		try {
 			uni.vibrateShort({
@@ -48,7 +51,22 @@
 			log.value = '音效异常：' + (e as Error).message
 		}
 	}
-	function testSensor() { log.value = '见 Task 0.5' }
+	function testSensor() {
+		sampleCount = 0
+		peakMagnitude = 0
+		log.value = '传感器：订阅中，请摇手机 3 秒...'
+		uni.startAccelerometer({ interval: 'game' })
+		uni.onAccelerometerChange((res) => {
+			sampleCount++
+			const mag = Math.sqrt(res.x * res.x + res.y * res.y + res.z * res.z)
+			if (mag > peakMagnitude) peakMagnitude = mag
+		})
+		setTimeout(() => {
+			uni.stopAccelerometer({})
+			uni.offAccelerometerChange()
+			log.value = `传感器：3 秒内采样 ${sampleCount} 次，峰值 ${peakMagnitude.toFixed(2)}`
+		}, 3000)
+	}
 	function testMultitouch() { log.value = '请在下方区域多指触摸' }
 
 	function onTouchStart(e : TouchEvent) { touchCount.value = e.touches.length }
