@@ -12,6 +12,7 @@
 			@touchend="onTouchEnd">
 			<text>触控区（按手指）</text>
 			<text>当前触点数：{{ touchCount }}</text>
+			<text>峰值触点数：{{ peakTouchCount }}</text>
 		</view>
 	</view>
 </template>
@@ -19,6 +20,7 @@
 <script setup lang="uts">
 	const log = ref('（等待操作）')
 	const touchCount = ref(0)
+	const peakTouchCount = ref(0)
 
 	let sampleCount = 0
 	let peakMagnitude = 0
@@ -69,8 +71,14 @@
 	}
 	function testMultitouch() { log.value = '请在下方区域多指触摸' }
 
-	function onTouchStart(e : TouchEvent) { touchCount.value = e.touches.length }
-	function onTouchMove(e : TouchEvent) { touchCount.value = e.touches.length }
+	function onTouchStart(e : TouchEvent) {
+		touchCount.value = e.touches.length
+		if (touchCount.value > peakTouchCount.value) peakTouchCount.value = touchCount.value
+	}
+	function onTouchMove(e : TouchEvent) {
+		touchCount.value = e.touches.length
+		if (touchCount.value > peakTouchCount.value) peakTouchCount.value = touchCount.value
+	}
 	function onTouchEnd(e : TouchEvent) { touchCount.value = e.touches.length }
 </script>
 
