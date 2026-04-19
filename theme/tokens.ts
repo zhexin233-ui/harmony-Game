@@ -11,6 +11,11 @@ export type ThemeTokens = {
   success: string
   danger: string
   glow: string
+  warn: string
+  urgent: string
+  armedBg: string
+  signalBg: string
+  emojiShadow: string
 }
 
 export const themes: Record<Theme, ThemeTokens> = {
@@ -24,7 +29,12 @@ export const themes: Record<Theme, ThemeTokens> = {
     textMuted: '#7A6A87',
     success: '#7ED957',
     danger: '#FF6B9D',
-    glow: 'transparent'
+    glow: 'transparent',
+    warn: '#FFE0B2',
+    urgent: '#FFB0B0',
+    armedBg: '#FFE9C7',
+    signalBg: '#7ED957',
+    emojiShadow: 'none'
   },
   neon: {
     bg: '#0A1428',
@@ -36,6 +46,11 @@ export const themes: Record<Theme, ThemeTokens> = {
     textMuted: '#7A88A6',
     success: '#6CE5B8',
     danger: '#FF3D9A',
-    glow: 'rgba(0, 212, 255, 0.5)'
+    glow: 'rgba(0, 212, 255, 0.5)',
+    warn: '#3A2812',
+    urgent: '#5A1020',
+    armedBg: '#1A2A4C',
+    signalBg: '#00D4FF',
+    emojiShadow: '0 0 8px rgba(0, 212, 255, 0.8)'
   }
 }

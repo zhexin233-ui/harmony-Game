@@ -21,3 +21,25 @@ describe('themes', () => {
     expect(values).not.toMatch(/#302b63|#8b5cf6|#6a0dad/)
   })
 })
+
+describe('themes tokens 完整性', () => {
+  const requiredKeys = [
+    'bg', 'bgEnd', 'primary', 'secondary', 'accent',
+    'text', 'textMuted', 'success', 'danger', 'glow',
+    'warn', 'urgent', 'armedBg', 'signalBg', 'emojiShadow'
+  ] as const
+
+  it('cartoon 主题包含所有必要 token', () => {
+    for (const k of requiredKeys) {
+      expect((themes.cartoon as unknown as Record<string, string>)[k]).toBeTruthy()
+    }
+  })
+  it('neon 主题包含所有必要 token', () => {
+    for (const k of requiredKeys) {
+      expect((themes.neon as unknown as Record<string, string>)[k]).toBeTruthy()
+    }
+  })
+  it('neon 的 emojiShadow 含发光效果', () => {
+    expect(themes.neon.emojiShadow).toMatch(/rgba|#/)
+  })
+})
