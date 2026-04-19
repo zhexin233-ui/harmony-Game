@@ -20,7 +20,22 @@
 	const log = ref('（等待操作）')
 	const touchCount = ref(0)
 
-	function testVibrate() { log.value = '见 Task 0.3' }
+	function testVibrate() {
+		try {
+			uni.vibrateShort({
+				success: () => { log.value = '振动 短：成功' },
+				fail: (err) => { log.value = '振动 短：失败 ' + JSON.stringify(err) }
+			})
+			setTimeout(() => {
+				uni.vibrateLong({
+					success: () => { log.value += ' / 长：成功' },
+					fail: (err) => { log.value += ' / 长：失败 ' + JSON.stringify(err) }
+				})
+			}, 500)
+		} catch (e) {
+			log.value = '异常：' + (e as Error).message
+		}
+	}
 	function testAudio() { log.value = '见 Task 0.4' }
 	function testSensor() { log.value = '见 Task 0.5' }
 	function testMultitouch() { log.value = '请在下方区域多指触摸' }
