@@ -9,6 +9,8 @@
 		console.log('App Launch')
 		const settings = useSettings()
 		settings.load()
+		const target = settings.hasOnboarded ? '/pages/home/index' : '/pages/onboarding/index'
+		uni.reLaunch({ url: target })
 	})
 
 	onAppShow(() => {

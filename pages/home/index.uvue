@@ -1,0 +1,31 @@
+<template>
+	<view class="container">
+		<text class="logo">🎉 派对小游戏</text>
+		<AppButton label="▶ 开始玩" variant="primary" @tap="goStart" />
+		<AppButton label="📋 惩罚规则" variant="secondary" @tap="goPunishment" />
+		<AppButton label="⚙️ 设置" variant="ghost" @tap="goSettings" />
+	</view>
+</template>
+
+<script setup lang="uts">
+	import AppButton from '@/components/AppButton.uvue'
+
+	function goStart() { uni.navigateTo({ url: '/pages/lobby/player-count' }) }
+	function goPunishment() { uni.navigateTo({ url: '/pages/punishment/index' }) }
+	function goSettings() { uni.navigateTo({ url: '/pages/settings/index' }) }
+</script>
+
+<style>
+	.container {
+		padding: 48px 24px;
+		flex: 1;
+		justify-content: center;
+	}
+	.logo {
+		text-align: center;
+		font-size: 30px;
+		font-weight: bold;
+		margin-bottom: 40px;
+		color: var(--text, #3D2F4F);
+	}
+</style>
