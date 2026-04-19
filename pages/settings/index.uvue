@@ -1,0 +1,61 @@
+<template>
+	<view class="container">
+		<text class="section-title">主题</text>
+		<view class="row">
+			<view class="pill" :class="{ active: settings.theme === 'cartoon' }" @tap="settings.setTheme('cartoon')">
+				<text>🎈 Q 版卡通</text>
+			</view>
+			<view class="pill" :class="{ active: settings.theme === 'neon' }" @tap="settings.setTheme('neon')">
+				<text>⚡ 霓虹电玩</text>
+			</view>
+		</view>
+
+		<text class="section-title">音效</text>
+		<view class="row between">
+			<text>音效</text>
+			<switch :checked="settings.soundEnabled" @change="toggleSound" />
+		</view>
+
+		<text class="section-title">振动</text>
+		<view class="row between">
+			<text>振动</text>
+			<switch :checked="settings.vibrationEnabled" @change="toggleVibration" />
+		</view>
+
+		<text class="section-title">关于</text>
+		<text class="about">派对小游戏 v0.1.0 · 2026</text>
+	</view>
+</template>
+
+<script setup lang="uts">
+	import { useSettings } from '@/stores/settings'
+
+	const settings = useSettings()
+
+	function toggleSound() { settings.toggleSound() }
+	function toggleVibration() { settings.toggleVibration() }
+</script>
+
+<style>
+	.container { padding: 24px; }
+	.section-title {
+		font-size: 14px;
+		color: var(--text-muted, #7A6A87);
+		margin-top: 18px;
+		margin-bottom: 8px;
+	}
+	.row { flex-direction: row; }
+	.row.between {
+		justify-content: space-between;
+		align-items: center;
+		padding: 12px 0;
+	}
+	.pill {
+		padding: 10px 18px;
+		border-radius: 18px;
+		background-color: var(--bg-end, #FFE5F1);
+		margin-right: 8px;
+	}
+	.pill.active { background-color: var(--primary, #FF6B9D); }
+	.about { color: var(--text-muted, #7A6A87); }
+</style>
