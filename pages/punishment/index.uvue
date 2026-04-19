@@ -1,0 +1,32 @@
+<template>
+	<view class="container">
+		<text class="emoji">📋</text>
+		<text class="title">惩罚规则</text>
+		<text class="desc">内置规则 + 用户自定义条目的管理入口将在 Plan 2 上线。</text>
+		<AppButton label="返回" variant="ghost" @tap="back" />
+	</view>
+</template>
+
+<script setup lang="uts">
+	import AppButton from '@/components/AppButton.uvue'
+
+	function back() { uni.navigateBack({}) }
+</script>
+
+<style>
+	.container {
+		padding: 40px 24px;
+		align-items: center;
+	}
+	.emoji { font-size: 64px; }
+	.title {
+		font-size: 22px;
+		font-weight: bold;
+		margin-top: 12px;
+	}
+	.desc {
+		color: var(--text-muted, #7A6A87);
+		margin: 16px 0;
+		text-align: center;
+	}
+</style>

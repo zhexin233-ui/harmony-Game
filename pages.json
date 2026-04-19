@@ -53,6 +53,12 @@
 			"style": {
 				"navigationBarTitleText": "结算"
 			}
+		},
+		{
+			"path": "pages/punishment/index",
+			"style": {
+				"navigationBarTitleText": "惩罚规则"
+			}
 		}
 	],
 	"globalStyle": {
