@@ -35,6 +35,12 @@
 			"style": {
 				"navigationBarTitleText": "玩家名字"
 			}
+		},
+		{
+			"path": "pages/lobby/games",
+			"style": {
+				"navigationBarTitleText": "选游戏"
+			}
 		}
 	],
 	"globalStyle": {

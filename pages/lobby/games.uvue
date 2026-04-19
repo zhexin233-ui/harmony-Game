@@ -1,0 +1,82 @@
+<template>
+	<view class="container">
+		<text class="hint">人数：{{ session.playerCount }}</text>
+
+		<text class="category">🎲 运气派</text>
+		<view class="grid">
+			<GameTile v-for="g in luck" :key="g.id"
+				:emoji="g.emoji" :name="g.name"
+				:hint="disabledReason(g)"
+				:disabled="!canPlay(g)"
+				@tap="enter(g)" />
+		</view>
+
+		<text class="category">⚔️ 实力派</text>
+		<view class="grid">
+			<GameTile v-for="g in skill" :key="g.id"
+				:emoji="g.emoji" :name="g.name"
+				:hint="disabledReason(g)"
+				:disabled="!canPlay(g)"
+				@tap="enter(g)" />
+		</view>
+	</view>
+</template>
+
+<script setup lang="uts">
+	import GameTile from '@/components/GameTile.uvue'
+	import { useSession, type GameId } from '@/stores/session'
+
+	type GameMeta = {
+		id : GameId
+		emoji : string
+		name : string
+		min : number
+		max : number
+	}
+
+	const luck : GameMeta[] = [
+		{ id: 'bomb', emoji: '💣', name: '定时炸弹', min: 2, max: 8 },
+		{ id: 'crocodile', emoji: '🐊', name: '鳄鱼拔牙', min: 2, max: 8 },
+		{ id: 'wheel', emoji: '🎯', name: '指尖大轮盘', min: 2, max: 5 }
+	]
+	const skill : GameMeta[] = [
+		{ id: 'horse-race', emoji: '🐎', name: '摇一摇赛马', min: 2, max: 8 },
+		{ id: 'reaction', emoji: '👆', name: '同屏反应大比拼', min: 2, max: 5 }
+	]
+
+	const session = useSession()
+
+	function canPlay(g : GameMeta) : boolean {
+		return session.playerCount >= g.min && session.playerCount <= g.max
+	}
+	function disabledReason(g : GameMeta) : string | undefined {
+		if (canPlay(g)) return undefined
+		if (session.playerCount > g.max) return `最多 ${g.max} 人`
+		if (session.playerCount < g.min) return `至少 ${g.min} 人`
+		return undefined
+	}
+	function enter(g : GameMeta) {
+		if (!canPlay(g)) return
+		session.currentGame = g.id
+		uni.navigateTo({ url: `/pages/game/placeholder?id=${g.id}` })
+	}
+</script>
+
+<style>
+	.container { padding: 20px; }
+	.hint {
+		color: var(--text-muted, #7A6A87);
+		margin-bottom: 12px;
+	}
+	.category {
+		margin-top: 12px;
+		font-size: 16px;
+		font-weight: bold;
+		color: var(--text, #3D2F4F);
+	}
+	.grid {
+		flex-direction: row;
+		flex-wrap: wrap;
+		margin-top: 8px;
+	}
+</style>
