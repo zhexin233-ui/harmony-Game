@@ -1,0 +1,45 @@
+<template>
+	<view class="app-btn" :class="[variantClass, { disabled: disabled }]" @tap="onTap">
+		<text class="label">{{ label }}</text>
+	</view>
+</template>
+
+<script setup lang="uts">
+	const props = defineProps<{
+		label : string
+		variant ?: 'primary' | 'secondary' | 'ghost'
+		disabled ?: boolean
+	}>()
+	const emit = defineEmits<{ (e : 'tap') : void }>()
+
+	const variantClass = computed(() => 'variant-' + (props.variant ?? 'primary'))
+
+	function onTap() {
+		if (props.disabled) return
+		emit('tap')
+	}
+</script>
+
+<style>
+	.app-btn {
+		padding: 14px 24px;
+		border-radius: 22px;
+		align-items: center;
+		justify-content: center;
+		margin-top: 8px;
+	}
+	.label {
+		color: #FFFFFF;
+		font-size: 16px;
+		font-weight: bold;
+	}
+	.variant-primary { background-color: var(--primary, #FF6B9D); }
+	.variant-secondary { background-color: var(--secondary, #FFB347); }
+	.variant-ghost {
+		background-color: transparent;
+		border-width: 1px;
+		border-color: var(--primary, #FF6B9D);
+	}
+	.variant-ghost .label { color: var(--primary, #FF6B9D); }
+	.disabled { opacity: 0.4; }
+</style>
