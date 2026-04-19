@@ -1,0 +1,48 @@
+<template>
+	<view class="tile" :class="{ disabled: disabled }" @tap="onTap">
+		<text class="emoji">{{ emoji }}</text>
+		<text class="name">{{ name }}</text>
+		<text v-if="hint" class="hint">{{ hint }}</text>
+	</view>
+</template>
+
+<script setup lang="uts">
+	const props = defineProps<{
+		emoji : string
+		name : string
+		hint ?: string
+		disabled ?: boolean
+	}>()
+	const emit = defineEmits<{ (e : 'tap') : void }>()
+
+	function onTap() {
+		if (props.disabled) return
+		emit('tap')
+	}
+</script>
+
+<style>
+	.tile {
+		flex: 1;
+		padding: 16px;
+		border-radius: 16px;
+		background-color: var(--bg-end, #FFE5F1);
+		align-items: center;
+		margin: 6px;
+		min-height: 110px;
+		justify-content: center;
+	}
+	.emoji { font-size: 34px; }
+	.name {
+		margin-top: 6px;
+		font-size: 14px;
+		color: var(--text, #3D2F4F);
+		font-weight: bold;
+	}
+	.hint {
+		margin-top: 2px;
+		font-size: 11px;
+		color: var(--text-muted, #7A6A87);
+	}
+	.disabled { opacity: 0.4; }
+</style>
