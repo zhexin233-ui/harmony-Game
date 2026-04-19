@@ -122,3 +122,91 @@ describe('usePunishment - pick', () => {
     }
   })
 })
+
+describe('usePunishment - CRUD', () => {
+  let written: Record<string, unknown>
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    ;(uni.getStorageSync as any) = (_k: string) => ''
+    written = {}
+    ;(uni.setStorageSync as any) = (k: string, v: unknown) => {
+      written[k] = v
+    }
+  })
+
+  it('addRule：追加自定义条目并持久化', () => {
+    const p = usePunishment()
+    p.load()
+    const before = p.rules.length
+    const newId = p.addRule('唱国歌')
+    expect(p.rules.length).toBe(before + 1)
+    const added = p.rules.find(r => r.id === newId)!
+    expect(added.text).toBe('唱国歌')
+    expect(added.builtIn).toBe(false)
+    expect(added.enabled).toBe(true)
+    expect((written['punishments'] as any).rules.find((r: any) => r.id === newId)).toBeTruthy()
+  })
+
+  it('updateRule：修改 text 并持久化（内置与自定义都允许）', () => {
+    const p = usePunishment()
+    p.load()
+    p.updateRule('builtin-01', '改后文案')
+    expect(p.rules.find(r => r.id === 'builtin-01')!.text).toBe('改后文案')
+    expect((written['punishments'] as any).rules.find((r: any) => r.id === 'builtin-01').text).toBe('改后文案')
+  })
+
+  it('toggleRule：切换 enabled 并持久化', () => {
+    const p = usePunishment()
+    p.load()
+    p.toggleRule('builtin-02')
+    expect(p.rules.find(r => r.id === 'builtin-02')!.enabled).toBe(false)
+    p.toggleRule('builtin-02')
+    expect(p.rules.find(r => r.id === 'builtin-02')!.enabled).toBe(true)
+  })
+
+  it('removeRule 自定义：直接从 rules 中移除', () => {
+    const p = usePunishment()
+    p.load()
+    const id = p.addRule('自定义临时')
+    const before = p.rules.length
+    p.removeRule(id)
+    expect(p.rules.length).toBe(before - 1)
+    expect(p.rules.find(r => r.id === id)).toBeUndefined()
+    expect((written['punishments'] as any).deletedBuiltinIds).toEqual([])
+  })
+
+  it('removeRule 内置：移除并加入墓碑，升级后不重新出现', () => {
+    const p = usePunishment()
+    p.load()
+    p.removeRule('builtin-10')
+    expect(p.rules.find(r => r.id === 'builtin-10')).toBeUndefined()
+    expect(p.deletedBuiltinIds).toContain('builtin-10')
+    expect((written['punishments'] as any).deletedBuiltinIds).toContain('builtin-10')
+
+    // 模拟"下次冷启动"：新 pinia，从 storage 重新 load
+    const snapshot = written['punishments']
+    setActivePinia(createPinia())
+    ;(uni.getStorageSync as any) = (k: string) => {
+      if (k === 'punishments') return snapshot
+      return ''
+    }
+    const p2 = usePunishment()
+    p2.load()
+    expect(p2.rules.find(r => r.id === 'builtin-10')).toBeUndefined()
+  })
+
+  it('updateRule 找不到 id：静默 no-op（不抛错）', () => {
+    const p = usePunishment()
+    p.load()
+    expect(() => p.updateRule('nope', 'xxx')).not.toThrow()
+  })
+
+  it('addRule：空白文本不入库（trim 后为空）', () => {
+    const p = usePunishment()
+    p.load()
+    const before = p.rules.length
+    const id = p.addRule('   ')
+    expect(id).toBe('')
+    expect(p.rules.length).toBe(before)
+  })
+})

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { BUILTIN_PUNISHMENTS } from '@/data/builtin-punishments'
+import { generateCustomId } from '@/utils/id'
 
 export type PunishmentRule = {
   id: string
@@ -61,6 +62,46 @@ export const usePunishment = defineStore('punishment', {
       if (pool.length === 0) return null
       const idx = Math.floor(Math.random() * pool.length)
       return pool[idx]
+    },
+    persist() {
+      uni.setStorageSync('punishments', {
+        rules: this.rules,
+        deletedBuiltinIds: this.deletedBuiltinIds
+      })
+    },
+    addRule(text: string): string {
+      const trimmed = text.trim()
+      if (trimmed.length === 0) return ''
+      const id = generateCustomId()
+      this.rules.push({ id, text: trimmed, builtIn: false, enabled: true })
+      this.persist()
+      return id
+    },
+    updateRule(id: string, text: string) {
+      const trimmed = text.trim()
+      if (trimmed.length === 0) return
+      const rule = this.rules.find(r => r.id === id)
+      if (!rule) return
+      rule.text = trimmed
+      this.persist()
+    },
+    toggleRule(id: string) {
+      const rule = this.rules.find(r => r.id === id)
+      if (!rule) return
+      rule.enabled = !rule.enabled
+      this.persist()
+    },
+    removeRule(id: string) {
+      const idx = this.rules.findIndex(r => r.id === id)
+      if (idx < 0) return
+      const rule = this.rules[idx]
+      if (rule.builtIn) {
+        if (!this.deletedBuiltinIds.includes(rule.id)) {
+          this.deletedBuiltinIds.push(rule.id)
+        }
+      }
+      this.rules.splice(idx, 1)
+      this.persist()
     }
   }
 })
