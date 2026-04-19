@@ -74,3 +74,28 @@ $uni-color-subtitle: #555555; // 二级标题颜色
 $uni-font-size-subtitle:26px;
 $uni-color-paragraph: #3F536E; // 文章段落颜色
 $uni-font-size-paragraph:15px;
+
+/* Phase 5：共享动画 keyframes —— 各游戏页通过 class 引用 */
+@keyframes pulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(-6px); }
+  75%      { transform: translateX(6px); }
+}
+
+.anim-pulse   { animation: pulse 1200ms ease-in-out infinite; }
+.anim-spin    { animation: spin 1400ms linear infinite; }
+.anim-fade-in { animation: fade-in 320ms ease-out both; }
+.anim-shake   { animation: shake 240ms ease-in-out 2; }
