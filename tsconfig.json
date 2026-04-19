@@ -21,7 +21,8 @@
     "games/**/*.ts",
     "utils/**/*.ts",
     "data/**/*.ts",
-    "tests/**/*.ts"
+    "tests/**/*.ts",
+    "types/**/*.d.ts"
   ],
   "exclude": ["node_modules", ".worktrees", "unpackage"]
 }
