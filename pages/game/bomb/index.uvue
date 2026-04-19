@@ -1,19 +1,19 @@
 <template>
-	<view class="container" :class="{ urgent: urgencyLevel >= 2, warn: urgencyLevel === 1 }">
-		<text class="big" :class="{ pulse: state === 'ticking' }">💣</text>
+	<view class="container" :style="containerStyle">
+		<text class="big anim-pulse" :style="bigEmojiStyle">💣</text>
 		<text class="title">定时炸弹</text>
 
 		<view v-if="state === 'ticking'" class="ticking">
-			<text class="hint">传递手机 · 点引线扣 1 秒</text>
+			<text class="hint" :style="hintStyle">传递手机 · 点引线扣 1 秒</text>
 			<AppButton label="✂️ 剪引线" variant="primary" @tap="onCutFuse" />
-			<text class="cuts">已剪 {{ snap?.fuseCuts ?? 0 }} 次</text>
+			<text class="cuts" :style="hintStyle">已剪 {{ snap?.fuseCuts ?? 0 }} 次</text>
 		</view>
 
 		<view v-else-if="state === 'exploded'" class="exploded">
-			<text class="boom">💥 爆炸了！</text>
-			<text class="hint">手里拿着手机的人点自己</text>
+			<text class="boom" :style="boomStyle">💥 爆炸了！</text>
+			<text class="hint" :style="hintStyle">手里拿着手机的人点自己</text>
 			<view class="who-grid">
-				<view v-for="i in session.playerCount" :key="i" class="who" @tap="claimLoser(i - 1)">
+				<view v-for="i in session.playerCount" :key="i" class="who" :style="whoBgStyle" @tap="claimLoser(i - 1)">
 					<text class="who-text">{{ session.displayNameOf(i - 1) }}</text>
 				</view>
 			</view>
@@ -36,6 +36,8 @@
 	import AppButton from '@/components/AppButton.uvue'
 	import GamePausedOverlay from '@/components/GamePausedOverlay.uvue'
 	import { useSession } from '@/stores/session'
+	import { useSettings } from '@/stores/settings'
+	import { themes } from '@/theme/tokens'
 	import { createBombGame, type BombGame, type BombSnapshot } from '@/games/bomb/logic'
 	import { preload, play } from '@/native/audio'
 	import { vibrateShort, vibrateLong } from '@/native/vibrator'
@@ -43,6 +45,8 @@
 	import { GAME_SOUNDS } from '@/utils/game-sounds'
 
 	const session = useSession()
+	const settings = useSettings()
+	const tokens = computed(() => themes[settings.theme])
 	const game = ref<BombGame | null>(null)
 	const snap = ref<BombSnapshot | null>(null)
 	const paused = ref(false)
@@ -60,6 +64,18 @@
 		if (ratio > 0.6) return 1
 		return 0
 	})
+
+	const containerStyle = computed(() => {
+		const level = urgencyLevel.value
+		const bg = level >= 2 ? tokens.value.urgent
+			: level === 1 ? tokens.value.warn
+				: tokens.value.bg
+		return { backgroundColor: bg }
+	})
+	const bigEmojiStyle = computed(() => ({ textShadow: tokens.value.emojiShadow }))
+	const boomStyle = computed(() => ({ color: tokens.value.danger }))
+	const whoBgStyle = computed(() => ({ backgroundColor: tokens.value.bgEnd }))
+	const hintStyle = computed(() => ({ color: tokens.value.textMuted }))
 
 	function update() {
 		snap.value = game.value!.getSnapshot()
@@ -171,12 +187,8 @@
 		min-height: 100vh;
 		align-items: center;
 		justify-content: center;
-		background-color: #FFF5EB;
 	}
-	.container.warn { background-color: #FFE0B2; }
-	.container.urgent { background-color: #FFB0B0; }
 	.big { font-size: 120px; }
-	.pulse { }
 	.title {
 		font-size: 22px;
 		font-weight: bold;
@@ -188,12 +200,10 @@
 		width: 100%;
 	}
 	.hint {
-		color: #7A6A87;
 		margin: 12px 0;
 	}
 	.cuts {
 		margin-top: 8px;
-		color: #7A6A87;
 	}
 	.exploded {
 		align-items: center;
@@ -203,7 +213,6 @@
 	.boom {
 		font-size: 28px;
 		font-weight: bold;
-		color: #FF6B9D;
 		margin: 16px 0;
 	}
 	.who-grid {
@@ -216,7 +225,6 @@
 		padding: 12px 18px;
 		margin: 6px;
 		border-radius: 16px;
-		background-color: #FFE5F1;
 	}
 	.who-text { font-weight: bold; }
 </style>
