@@ -1,10 +1,14 @@
 <template>
-	<view class="app-btn" :class="[variantClass, { disabled: disabled }]" @tap="onTap">
-		<text class="label">{{ label }}</text>
+	<view class="app-btn" :style="containerStyle" :class="{ disabled: disabled }" @tap="onTap">
+		<text class="label" :style="labelStyle">{{ label }}</text>
 	</view>
 </template>
 
 <script setup lang="uts">
+	import { computed } from 'vue'
+	import { useSettings } from '@/stores/settings'
+	import { themes } from '@/theme/tokens'
+
 	const props = defineProps<{
 		label : string
 		variant ?: 'primary' | 'secondary' | 'ghost'
@@ -12,7 +16,24 @@
 	}>()
 	const emit = defineEmits<{ (e : 'tap') : void }>()
 
-	const variantClass = computed(() => 'variant-' + (props.variant ?? 'primary'))
+	const settings = useSettings()
+	const tokens = computed(() => themes[settings.theme])
+
+	const containerStyle = computed(() => {
+		const v = props.variant ?? 'primary'
+		const bg = v === 'secondary' ? tokens.value.secondary
+			: v === 'ghost' ? 'transparent'
+				: tokens.value.primary
+		return {
+			backgroundColor: bg,
+			borderWidth: v === 'ghost' ? '1px' : '0px',
+			borderColor: tokens.value.primary
+		}
+	})
+	const labelStyle = computed(() => {
+		const v = props.variant ?? 'primary'
+		return { color: v === 'ghost' ? tokens.value.primary : '#FFFFFF' }
+	})
 
 	function onTap() {
 		if (props.disabled) return
@@ -29,17 +50,8 @@
 		margin-top: 8px;
 	}
 	.label {
-		color: #FFFFFF;
 		font-size: 16px;
 		font-weight: bold;
 	}
-	.variant-primary { background-color: var(--primary, #FF6B9D); }
-	.variant-secondary { background-color: var(--secondary, #FFB347); }
-	.variant-ghost {
-		background-color: transparent;
-		border-width: 1px;
-		border-color: var(--primary, #FF6B9D);
-	}
-	.variant-ghost .label { color: var(--primary, #FF6B9D); }
 	.disabled { opacity: 0.4; }
 </style>

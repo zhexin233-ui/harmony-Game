@@ -1,5 +1,7 @@
 <script setup lang="uts">
+	import { watchEffect } from 'vue'
 	import { useSettings } from '@/stores/settings'
+	import { applyTheme } from '@/theme/apply'
 
 	// #ifdef APP-ANDROID || APP-HARMONY
 	let firstBackTime = 0
@@ -11,6 +13,15 @@
 		settings.load()
 		const target = settings.hasOnboarded ? '/pages/home/index' : '/pages/onboarding/index'
 		uni.reLaunch({ url: target })
+
+		// 尝试把主题 Token 写入 CSS 变量。若当前平台 UVue 不支持 document.documentElement，
+		// 组件仍能通过自身的 computed 样式回退（见 AppButton / GameTile）。
+		watchEffect(() => {
+			try {
+				const root = (globalThis as any).document?.documentElement
+				if (root) applyTheme(settings.theme, root as HTMLElement)
+			} catch {}
+		})
 	})
 
 	onAppShow(() => {

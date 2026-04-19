@@ -1,12 +1,16 @@
 <template>
-	<view class="tile" :class="{ disabled: disabled }" @tap="onTap">
+	<view class="tile" :style="tileStyle" :class="{ disabled: disabled }" @tap="onTap">
 		<text class="emoji">{{ emoji }}</text>
-		<text class="name">{{ name }}</text>
-		<text v-if="hint" class="hint">{{ hint }}</text>
+		<text class="name" :style="nameStyle">{{ name }}</text>
+		<text v-if="hint" class="hint" :style="hintStyle">{{ hint }}</text>
 	</view>
 </template>
 
 <script setup lang="uts">
+	import { computed } from 'vue'
+	import { useSettings } from '@/stores/settings'
+	import { themes } from '@/theme/tokens'
+
 	const props = defineProps<{
 		emoji : string
 		name : string
@@ -14,6 +18,13 @@
 		disabled ?: boolean
 	}>()
 	const emit = defineEmits<{ (e : 'tap') : void }>()
+
+	const settings = useSettings()
+	const tokens = computed(() => themes[settings.theme])
+
+	const tileStyle = computed(() => ({ backgroundColor: tokens.value.bgEnd }))
+	const nameStyle = computed(() => ({ color: tokens.value.text }))
+	const hintStyle = computed(() => ({ color: tokens.value.textMuted }))
 
 	function onTap() {
 		if (props.disabled) return
@@ -26,7 +37,6 @@
 		flex: 1;
 		padding: 16px;
 		border-radius: 16px;
-		background-color: var(--bg-end, #FFE5F1);
 		align-items: center;
 		margin: 6px;
 		min-height: 110px;
@@ -36,13 +46,11 @@
 	.name {
 		margin-top: 6px;
 		font-size: 14px;
-		color: var(--text, #3D2F4F);
 		font-weight: bold;
 	}
 	.hint {
 		margin-top: 2px;
 		font-size: 11px;
-		color: var(--text-muted, #7A6A87);
 	}
 	.disabled { opacity: 0.4; }
 </style>
