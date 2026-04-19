@@ -73,6 +73,12 @@
 			}
 		},
 		{
+			"path": "pages/game/reaction/index",
+			"style": {
+				"navigationBarTitleText": "同屏反应"
+			}
+		},
+		{
 			"path": "pages/game/result",
 			"style": {
 				"navigationBarTitleText": "结算"

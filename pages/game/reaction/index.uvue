@@ -1,0 +1,238 @@
+<template>
+	<view
+		class="container"
+		:class="{
+			armed: state === 'armed',
+			signal: state === 'signal',
+			falseStart: falseStart,
+			resolved: state === 'resolved'
+		}"
+		@touchstart="onTouchStart"
+		@touchmove="onTouchMove"
+		@touchend="onTouchEnd"
+		@touchcancel="onTouchEnd"
+	>
+		<text class="title">👆 同屏反应大比拼</text>
+
+		<view v-if="state === 'collecting'" class="hint-box">
+			<text class="hint-big">
+				请 {{ session.playerCount }} 位玩家各用一根手指按住屏幕
+			</text>
+			<text class="hint-small">
+				当前：{{ snap?.fingerIds?.length ?? 0 }} / {{ session.playerCount }}
+			</text>
+		</view>
+
+		<view v-else-if="state === 'armed'" class="hint-box">
+			<text class="hint-big">👀 所有人保持按住，等待信号…</text>
+			<text class="hint-small">抢先松手 = 立即输</text>
+		</view>
+
+		<view v-else-if="state === 'signal'" class="hint-box">
+			<text class="signal-big">⚡ 现在！松手！</text>
+			<text class="hint-small">最后松手的人输</text>
+		</view>
+
+		<view v-else-if="state === 'resolved'" class="hint-box">
+			<text class="loser-big">
+				{{ falseStart ? '抢跑' : '最后松手' }}：{{ session.displayNameOf(snap?.result?.loser ?? 0) }}
+			</text>
+			<AppButton label="查看结果" variant="primary" @tap="goResult" />
+		</view>
+
+		<AppButton v-if="state !== 'signal'" label="返回大厅" variant="ghost" @tap="onExit" />
+
+		<GamePausedOverlay
+			:visible="paused"
+			desc="已暂停（切后台会重置本局）"
+			@resume="onResume"
+			@restart="onRestart"
+			@exit="onExit"
+		/>
+	</view>
+</template>
+
+<script setup lang="uts">
+	import { ref, computed } from 'vue'
+	import AppButton from '@/components/AppButton.uvue'
+	import GamePausedOverlay from '@/components/GamePausedOverlay.uvue'
+	import { useSession } from '@/stores/session'
+	import {
+		createReactionGame,
+		type ReactionGame,
+		type ReactionSnapshot
+	} from '@/games/reaction/logic'
+	import { preload, play } from '@/native/audio'
+	import { vibrateShort, vibrateLong } from '@/native/vibrator'
+	import { keepAwake, releaseAwake } from '@/native/screen'
+	import { GAME_SOUNDS } from '@/utils/game-sounds'
+
+	const session = useSession()
+	const game = ref<ReactionGame | null>(null)
+	const snap = ref<ReactionSnapshot | null>(null)
+	const paused = ref(false)
+	const falseStart = ref(false)
+
+	let tickTimer : number | null = null
+	let lastTickAt = 0
+
+	const state = computed(() => snap.value?.state ?? 'collecting')
+
+	function update() {
+		snap.value = game.value!.getSnapshot()
+	}
+
+	function init() {
+		falseStart.value = false
+		const raw = session.playerCount > 0 ? session.playerCount : 2
+		const count = Math.min(5, Math.max(2, raw))
+		game.value = createReactionGame({ playerCount: count })
+		update()
+		stopLoop()
+	}
+
+	function onTouchStart(e : TouchEvent) {
+		if (snap.value?.state !== 'collecting') return
+		for (let i = 0; i < e.changedTouches.length; i++) {
+			const t = e.changedTouches[i]
+			game.value?.addFinger(t.identifier as number)
+		}
+		update()
+		if (snap.value?.state === 'armed') {
+			play('click')
+			vibrateShort()
+			startLoop()
+		}
+	}
+
+	function onTouchMove(_e : TouchEvent) {
+		// 只关心触发边缘，不处理 move
+	}
+
+	function onTouchEnd(e : TouchEvent) {
+		const s = snap.value
+		if (s == null) return
+		const wasArmed = s.state === 'armed'
+		for (let i = 0; i < e.changedTouches.length; i++) {
+			const t = e.changedTouches[i]
+			game.value?.removeFinger(t.identifier as number)
+		}
+		update()
+		const after = snap.value!
+		if (after.state === 'resolved') {
+			falseStart.value = wasArmed
+			stopLoop()
+			vibrateLong()
+			play('lose')
+		}
+	}
+
+	function startLoop() {
+		if (tickTimer != null) return
+		lastTickAt = Date.now()
+		tickTimer = setInterval(() => {
+			const now = Date.now()
+			const delta = now - lastTickAt
+			lastTickAt = now
+			const before = snap.value?.state
+			game.value?.tick(delta)
+			update()
+			if (before === 'armed' && snap.value?.state === 'signal') {
+				play('signal')
+				vibrateLong()
+			}
+		}, 50) as unknown as number
+	}
+
+	function stopLoop() {
+		if (tickTimer != null) {
+			clearInterval(tickTimer)
+			tickTimer = null
+		}
+	}
+
+	function goResult() {
+		const s = snap.value
+		if (s == null || s.result == null) return
+		session.loser = s.result.loser
+		stopLoop()
+		releaseAwake()
+		uni.redirectTo({ url: '/pages/game/result' })
+	}
+
+	function onResume() { paused.value = false; onRestart() }
+
+	function onRestart() {
+		paused.value = false
+		init()
+	}
+
+	function onExit() {
+		paused.value = false
+		stopLoop()
+		releaseAwake()
+		session.exitToLobby()
+		uni.redirectTo({ url: '/pages/lobby/games' })
+	}
+
+	onLoad(() => {
+		preload(GAME_SOUNDS)
+		keepAwake()
+		init()
+	})
+
+	onUnload(() => {
+		stopLoop()
+		releaseAwake()
+	})
+
+	onHide(() => {
+		if (snap.value?.state !== 'resolved') {
+			stopLoop()
+			paused.value = true
+		}
+	})
+</script>
+
+<style>
+	.container {
+		padding: 20px;
+		min-height: 100vh;
+		align-items: center;
+		justify-content: center;
+		background-color: #FFF5EB;
+	}
+	.container.armed { background-color: #FFE9C7; }
+	.container.signal { background-color: #7ED957; }
+	.container.falseStart { background-color: #FFB0B0; }
+	.container.resolved { background-color: #FFE5F1; }
+	.title {
+		font-size: 22px;
+		font-weight: bold;
+		margin-bottom: 24px;
+	}
+	.hint-box { align-items: center; }
+	.hint-big {
+		font-size: 20px;
+		font-weight: bold;
+		text-align: center;
+		color: #3D2F4F;
+	}
+	.hint-small {
+		margin-top: 8px;
+		color: #7A6A87;
+		text-align: center;
+	}
+	.signal-big {
+		font-size: 36px;
+		font-weight: bold;
+		color: #FFFFFF;
+	}
+	.loser-big {
+		font-size: 22px;
+		font-weight: bold;
+		color: #FF6B9D;
+		margin: 16px 0;
+		text-align: center;
+	}
+</style>
