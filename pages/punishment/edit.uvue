@@ -1,0 +1,86 @@
+<template>
+	<view class="container">
+		<text class="title">{{ isEdit ? '编辑规则' : '新增规则' }}</text>
+
+		<textarea class="input" :value="text" :placeholder="placeholder" :maxlength="80"
+			@input="onInput" />
+
+		<text class="counter">{{ text.length }} / 80</text>
+
+		<AppButton label="保存" variant="primary" :disabled="!canSave" @tap="save" />
+		<AppButton label="取消" variant="ghost" @tap="cancel" />
+	</view>
+</template>
+
+<script setup lang="uts">
+	import { ref, computed } from 'vue'
+	import AppButton from '@/components/AppButton.uvue'
+	import { usePunishment } from '@/stores/punishment'
+
+	const store = usePunishment()
+
+	const isEdit = ref(false)
+	const editingId = ref('')
+	const text = ref('')
+	const placeholder = '例如：做 5 个俯卧撑'
+
+	const canSave = computed(() => text.value.trim().length > 0)
+
+	onLoad((options: Record<string, string | undefined>) => {
+		const mode = options['mode']
+		if (mode === 'edit') {
+			const id = options['id']
+			if (id) {
+				isEdit.value = true
+				editingId.value = id
+				const rule = store.rules.find(r => r.id === id)
+				if (rule) text.value = rule.text
+			}
+		}
+	})
+
+	function onInput(e: InputEvent) {
+		const detail = e.detail as any
+		let v = ''
+		if (detail != null && typeof detail.value === 'string') v = detail.value as string
+		text.value = v
+	}
+
+	function save() {
+		if (!canSave.value) return
+		if (isEdit.value) {
+			store.updateRule(editingId.value, text.value)
+		} else {
+			store.addRule(text.value)
+		}
+		uni.navigateBack({})
+	}
+	function cancel() { uni.navigateBack({}) }
+</script>
+
+<style>
+	.container { padding: 24px; }
+	.title {
+		font-size: 20px;
+		font-weight: bold;
+		margin-bottom: 16px;
+	}
+	.input {
+		width: 100%;
+		height: 120px;
+		padding: 12px;
+		border-width: 1px;
+		border-color: rgba(0,0,0,0.15);
+		border-style: solid;
+		border-radius: 12px;
+		background-color: var(--bg-end, #FFE5F1);
+		color: var(--text, #3D2F4F);
+	}
+	.counter {
+		align-self: flex-end;
+		margin-top: 6px;
+		margin-bottom: 12px;
+		color: var(--text-muted, #7A6A87);
+		font-size: 12px;
+	}
+</style>
