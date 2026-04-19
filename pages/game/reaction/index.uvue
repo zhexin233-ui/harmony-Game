@@ -1,40 +1,35 @@
 <template>
 	<view
 		class="container"
-		:class="{
-			armed: state === 'armed',
-			signal: state === 'signal',
-			falseStart: falseStart,
-			resolved: state === 'resolved'
-		}"
+		:style="containerStyle"
 		@touchstart="onTouchStart"
 		@touchmove="onTouchMove"
 		@touchend="onTouchEnd"
 		@touchcancel="onTouchEnd"
 	>
-		<text class="title">👆 同屏反应大比拼</text>
+		<text class="title" :style="bigHintStyle">👆 同屏反应大比拼</text>
 
 		<view v-if="state === 'collecting'" class="hint-box">
-			<text class="hint-big">
+			<text class="hint-big" :style="bigHintStyle">
 				请 {{ session.playerCount }} 位玩家各用一根手指按住屏幕
 			</text>
-			<text class="hint-small">
+			<text class="hint-small" :style="smallHintStyle">
 				当前：{{ snap?.fingerIds?.length ?? 0 }} / {{ session.playerCount }}
 			</text>
 		</view>
 
 		<view v-else-if="state === 'armed'" class="hint-box">
-			<text class="hint-big">👀 所有人保持按住，等待信号…</text>
-			<text class="hint-small">抢先松手 = 立即输</text>
+			<text class="hint-big" :style="bigHintStyle">👀 所有人保持按住，等待信号…</text>
+			<text class="hint-small" :style="smallHintStyle">抢先松手 = 立即输</text>
 		</view>
 
 		<view v-else-if="state === 'signal'" class="hint-box">
-			<text class="signal-big">⚡ 现在！松手！</text>
-			<text class="hint-small">最后松手的人输</text>
+			<text class="signal-big" :style="signalBigStyle">⚡ 现在！松手！</text>
+			<text class="hint-small" :style="smallHintStyle">最后松手的人输</text>
 		</view>
 
 		<view v-else-if="state === 'resolved'" class="hint-box">
-			<text class="loser-big">
+			<text class="loser-big" :style="loserStyle">
 				{{ falseStart ? '抢跑' : '最后松手' }}：{{ session.displayNameOf(snap?.result?.loser ?? 0) }}
 			</text>
 			<AppButton label="查看结果" variant="primary" @tap="goResult" />
@@ -57,6 +52,8 @@
 	import AppButton from '@/components/AppButton.uvue'
 	import GamePausedOverlay from '@/components/GamePausedOverlay.uvue'
 	import { useSession } from '@/stores/session'
+	import { useSettings } from '@/stores/settings'
+	import { themes } from '@/theme/tokens'
 	import {
 		createReactionGame,
 		type ReactionGame,
@@ -68,6 +65,8 @@
 	import { GAME_SOUNDS } from '@/utils/game-sounds'
 
 	const session = useSession()
+	const settings = useSettings()
+	const tokens = computed(() => themes[settings.theme])
 	const game = ref<ReactionGame | null>(null)
 	const snap = ref<ReactionSnapshot | null>(null)
 	const paused = ref(false)
@@ -77,6 +76,19 @@
 	let lastTickAt = 0
 
 	const state = computed(() => snap.value?.state ?? 'collecting')
+
+	const containerStyle = computed(() => {
+		const st = state.value
+		if (falseStart.value)       return { backgroundColor: tokens.value.urgent }
+		if (st === 'signal')        return { backgroundColor: tokens.value.signalBg }
+		if (st === 'armed')         return { backgroundColor: tokens.value.armedBg }
+		if (st === 'resolved')      return { backgroundColor: tokens.value.bgEnd }
+		return { backgroundColor: tokens.value.bg }
+	})
+	const bigHintStyle = computed(() => ({ color: tokens.value.text }))
+	const smallHintStyle = computed(() => ({ color: tokens.value.textMuted }))
+	const signalBigStyle = computed(() => ({ color: '#FFFFFF' }))
+	const loserStyle = computed(() => ({ color: tokens.value.danger }))
 
 	function update() {
 		snap.value = game.value!.getSnapshot()
@@ -200,12 +212,7 @@
 		min-height: 100vh;
 		align-items: center;
 		justify-content: center;
-		background-color: #FFF5EB;
 	}
-	.container.armed { background-color: #FFE9C7; }
-	.container.signal { background-color: #7ED957; }
-	.container.falseStart { background-color: #FFB0B0; }
-	.container.resolved { background-color: #FFE5F1; }
 	.title {
 		font-size: 22px;
 		font-weight: bold;
@@ -216,22 +223,18 @@
 		font-size: 20px;
 		font-weight: bold;
 		text-align: center;
-		color: #3D2F4F;
 	}
 	.hint-small {
 		margin-top: 8px;
-		color: #7A6A87;
 		text-align: center;
 	}
 	.signal-big {
 		font-size: 36px;
 		font-weight: bold;
-		color: #FFFFFF;
 	}
 	.loser-big {
 		font-size: 22px;
 		font-weight: bold;
-		color: #FF6B9D;
 		margin: 16px 0;
 		text-align: center;
 	}
