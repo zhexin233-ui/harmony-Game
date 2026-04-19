@@ -1,6 +1,7 @@
 <script setup lang="uts">
 	import { watchEffect } from 'vue'
 	import { useSettings } from '@/stores/settings'
+	import { usePunishment } from '@/stores/punishment'
 	import { applyTheme } from '@/theme/apply'
 
 	// #ifdef APP-ANDROID || APP-HARMONY
@@ -11,6 +12,8 @@
 		console.log('App Launch')
 		const settings = useSettings()
 		settings.load()
+		const punishment = usePunishment()
+		punishment.load()
 		const target = settings.hasOnboarded ? '/pages/home/index' : '/pages/onboarding/index'
 		uni.reLaunch({ url: target })
 

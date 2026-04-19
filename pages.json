@@ -83,6 +83,12 @@
 			"style": {
 				"navigationBarTitleText": "惩罚规则"
 			}
+		},
+		{
+			"path": "pages/punishment/edit",
+			"style": {
+				"navigationBarTitleText": "规则"
+			}
 		}
 	],
 	"globalStyle": {
