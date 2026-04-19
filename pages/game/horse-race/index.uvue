@@ -1,0 +1,300 @@
+<template>
+	<view class="container">
+		<text class="big">🐎</text>
+		<text class="title">摇一摇赛马</text>
+
+		<view v-if="state === 'ready'" class="ready">
+			<text class="round">
+				轮到：{{ session.displayNameOf(snap?.currentPlayer ?? 0) }}
+			</text>
+			<text v-if="prepCountdown > 0" class="count">准备：{{ prepCountdown }}</text>
+			<AppButton v-else label="开始摇！" variant="primary" @tap="startPrep" />
+		</view>
+
+		<view v-else-if="state === 'shaking'" class="shaking">
+			<text class="big-count">{{ currentShakeCount }}</text>
+			<text class="remaining">剩余 {{ remainingSec }} 秒</text>
+			<text class="hint">用力摇晃手机！</text>
+			<AppButton label="提前结束本轮" variant="ghost" @tap="onFinishPlayer" />
+		</view>
+
+		<view v-else-if="state === 'result'" class="result">
+			<text class="trophy">🏆 {{ session.displayNameOf(snap?.result?.winner ?? 0) }} 赢了！</text>
+			<text class="skull">💩 {{ session.displayNameOf(snap?.result?.loser ?? 0) }} 输了</text>
+			<text class="counts">
+				次数：{{ (snap?.shakeCounts ?? []).join(' · ') }}
+			</text>
+			<AppButton label="查看结果" variant="primary" @tap="goResult" />
+		</view>
+
+		<AppButton label="返回大厅" variant="ghost" @tap="onExit" />
+
+		<GamePausedOverlay
+			:visible="paused"
+			desc="已暂停，是否继续？"
+			@resume="onResume"
+			@restart="onRestart"
+			@exit="onExit"
+		/>
+	</view>
+</template>
+
+<script setup lang="uts">
+	import { ref, computed } from 'vue'
+	import AppButton from '@/components/AppButton.uvue'
+	import GamePausedOverlay from '@/components/GamePausedOverlay.uvue'
+	import { useSession } from '@/stores/session'
+	import {
+		createHorseRaceGame,
+		type HorseRaceGame,
+		type HorseRaceSnapshot
+	} from '@/games/horse-race/logic'
+	import { startAccelerometer, stopAccelerometer } from '@/native/sensor'
+	import { preload, play } from '@/native/audio'
+	import { vibrateShort, vibrateLong } from '@/native/vibrator'
+	import { keepAwake, releaseAwake } from '@/native/screen'
+	import { GAME_SOUNDS } from '@/utils/game-sounds'
+
+	const session = useSession()
+	const game = ref<HorseRaceGame | null>(null)
+	const snap = ref<HorseRaceSnapshot | null>(null)
+	const paused = ref(false)
+	const prepCountdown = ref(0)
+
+	let tickTimer : number | null = null
+	let prepTimer : number | null = null
+	let lastTickAt = 0
+	let accelActive = false
+
+	const state = computed(() => snap.value?.state ?? 'ready')
+	const currentShakeCount = computed(() => {
+		const s = snap.value
+		if (s == null) return 0
+		return s.shakeCounts[s.currentPlayer] ?? 0
+	})
+	const remainingSec = computed(() => {
+		const s = snap.value
+		if (s == null) return 0
+		const remain = Math.max(0, s.shakeDurationMs - s.elapsedMs)
+		return Math.ceil(remain / 1000)
+	})
+
+	function update() {
+		snap.value = game.value!.getSnapshot()
+	}
+
+	function init() {
+		const count = session.playerCount > 0 ? session.playerCount : 2
+		game.value = createHorseRaceGame({ playerCount: count })
+		update()
+	}
+
+	function startPrep() {
+		if (prepTimer != null) return
+		prepCountdown.value = 3
+		play('countdown')
+		prepTimer = setInterval(() => {
+			prepCountdown.value--
+			play('countdown')
+			if (prepCountdown.value <= 0) {
+				clearInterval(prepTimer!)
+				prepTimer = null
+				startShaking()
+			}
+		}, 1000) as unknown as number
+	}
+
+	function startShaking() {
+		if (game.value == null) return
+		game.value.startPlayer()
+		update()
+		startLoop()
+		startAccel()
+		play('signal')
+		vibrateShort()
+	}
+
+	function startLoop() {
+		if (tickTimer != null) return
+		lastTickAt = Date.now()
+		tickTimer = setInterval(() => {
+			const now = Date.now()
+			const delta = now - lastTickAt
+			lastTickAt = now
+			game.value?.tick(delta)
+			update()
+			const s = snap.value!
+			if (s.state === 'ready') {
+				stopLoop()
+				stopAccel()
+			} else if (s.state === 'result') {
+				stopLoop()
+				stopAccel()
+				vibrateLong()
+				play('win')
+			}
+		}, 100) as unknown as number
+	}
+
+	function stopLoop() {
+		if (tickTimer != null) {
+			clearInterval(tickTimer)
+			tickTimer = null
+		}
+	}
+
+	function startAccel() {
+		if (accelActive) return
+		accelActive = true
+		startAccelerometer((data) => {
+			const mag = Math.sqrt(data.x * data.x + data.y * data.y + data.z * data.z)
+			const prev = snap.value?.shakeCounts[snap.value.currentPlayer] ?? 0
+			game.value?.onSample(mag)
+			update()
+			if ((snap.value?.shakeCounts[snap.value.currentPlayer] ?? 0) > prev) {
+				vibrateShort()
+			}
+		}, 'game')
+	}
+
+	function stopAccel() {
+		if (!accelActive) return
+		accelActive = false
+		stopAccelerometer()
+	}
+
+	function onFinishPlayer() {
+		play('click')
+		game.value?.finishPlayer()
+		update()
+		if (snap.value?.state === 'result') {
+			stopLoop()
+			stopAccel()
+			vibrateLong()
+			play('win')
+		} else if (snap.value?.state === 'ready') {
+			stopLoop()
+			stopAccel()
+		}
+	}
+
+	function goResult() {
+		const s = snap.value
+		if (s == null || s.result == null) return
+		session.loser = s.result.loser
+		stopLoop()
+		stopAccel()
+		releaseAwake()
+		uni.redirectTo({ url: '/pages/game/result' })
+	}
+
+	function onResume() { paused.value = false }
+
+	function onRestart() {
+		paused.value = false
+		stopLoop()
+		stopAccel()
+		if (prepTimer != null) { clearInterval(prepTimer); prepTimer = null }
+		prepCountdown.value = 0
+		init()
+	}
+
+	function onExit() {
+		paused.value = false
+		stopLoop()
+		stopAccel()
+		if (prepTimer != null) { clearInterval(prepTimer); prepTimer = null }
+		releaseAwake()
+		session.exitToLobby()
+		uni.redirectTo({ url: '/pages/lobby/games' })
+	}
+
+	onLoad(() => {
+		preload(GAME_SOUNDS)
+		keepAwake()
+		init()
+	})
+
+	onUnload(() => {
+		stopLoop()
+		stopAccel()
+		if (prepTimer != null) clearInterval(prepTimer)
+		releaseAwake()
+	})
+
+	onHide(() => {
+		if (snap.value?.state === 'shaking' || prepCountdown.value > 0) {
+			stopLoop()
+			stopAccel()
+			if (prepTimer != null) { clearInterval(prepTimer); prepTimer = null }
+			prepCountdown.value = 0
+			paused.value = true
+		}
+	})
+</script>
+
+<style>
+	.container {
+		padding: 24px 20px;
+		min-height: 100vh;
+		align-items: center;
+		background-color: #FFF5EB;
+	}
+	.big { font-size: 100px; }
+	.title {
+		font-size: 22px;
+		font-weight: bold;
+		margin-top: 8px;
+	}
+	.ready {
+		align-items: center;
+		margin-top: 24px;
+	}
+	.round {
+		font-size: 20px;
+		font-weight: bold;
+		margin-bottom: 16px;
+	}
+	.count {
+		font-size: 48px;
+		font-weight: bold;
+		color: #FF6B9D;
+	}
+	.shaking {
+		align-items: center;
+		margin-top: 16px;
+	}
+	.big-count {
+		font-size: 80px;
+		font-weight: bold;
+		color: #FF6B9D;
+	}
+	.remaining {
+		font-size: 18px;
+		color: #7A6A87;
+		margin-top: 8px;
+	}
+	.hint {
+		color: #7A6A87;
+		margin: 12px 0;
+	}
+	.result {
+		align-items: center;
+		margin-top: 24px;
+	}
+	.trophy {
+		font-size: 22px;
+		font-weight: bold;
+		color: #7ED957;
+	}
+	.skull {
+		font-size: 20px;
+		font-weight: bold;
+		color: #FF6B9D;
+		margin-top: 8px;
+	}
+	.counts {
+		margin-top: 12px;
+		color: #7A6A87;
+	}
+</style>
