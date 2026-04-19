@@ -1,27 +1,27 @@
 <template>
-	<view class="container">
-		<text class="big">🐎</text>
+	<view class="container" :style="containerStyle">
+		<text class="big" :style="bigEmojiStyle">🐎</text>
 		<text class="title">摇一摇赛马</text>
 
 		<view v-if="state === 'ready'" class="ready">
 			<text class="round">
 				轮到：{{ session.displayNameOf(snap?.currentPlayer ?? 0) }}
 			</text>
-			<text v-if="prepCountdown > 0" class="count">准备：{{ prepCountdown }}</text>
+			<text v-if="prepCountdown > 0" class="count anim-pulse" :style="countStyle">准备：{{ prepCountdown }}</text>
 			<AppButton v-else label="开始摇！" variant="primary" @tap="startPrep" />
 		</view>
 
 		<view v-else-if="state === 'shaking'" class="shaking">
-			<text class="big-count">{{ currentShakeCount }}</text>
-			<text class="remaining">剩余 {{ remainingSec }} 秒</text>
-			<text class="hint">用力摇晃手机！</text>
+			<text class="big-count anim-pulse" :style="countStyle">{{ currentShakeCount }}</text>
+			<text class="remaining" :style="mutedStyle">剩余 {{ remainingSec }} 秒</text>
+			<text class="hint" :style="mutedStyle">用力摇晃手机！</text>
 			<AppButton label="提前结束本轮" variant="ghost" @tap="onFinishPlayer" />
 		</view>
 
 		<view v-else-if="state === 'result'" class="result">
-			<text class="trophy">🏆 {{ session.displayNameOf(snap?.result?.winner ?? 0) }} 赢了！</text>
-			<text class="skull">💩 {{ session.displayNameOf(snap?.result?.loser ?? 0) }} 输了</text>
-			<text class="counts">
+			<text class="trophy" :style="trophyStyle">🏆 {{ session.displayNameOf(snap?.result?.winner ?? 0) }} 赢了！</text>
+			<text class="skull" :style="skullStyle">💩 {{ session.displayNameOf(snap?.result?.loser ?? 0) }} 输了</text>
+			<text class="counts" :style="mutedStyle">
 				次数：{{ (snap?.shakeCounts ?? []).join(' · ') }}
 			</text>
 			<AppButton label="查看结果" variant="primary" @tap="goResult" />
@@ -44,6 +44,8 @@
 	import AppButton from '@/components/AppButton.uvue'
 	import GamePausedOverlay from '@/components/GamePausedOverlay.uvue'
 	import { useSession } from '@/stores/session'
+	import { useSettings } from '@/stores/settings'
+	import { themes } from '@/theme/tokens'
 	import {
 		createHorseRaceGame,
 		type HorseRaceGame,
@@ -56,6 +58,8 @@
 	import { GAME_SOUNDS } from '@/utils/game-sounds'
 
 	const session = useSession()
+	const settings = useSettings()
+	const tokens = computed(() => themes[settings.theme])
 	const game = ref<HorseRaceGame | null>(null)
 	const snap = ref<HorseRaceSnapshot | null>(null)
 	const paused = ref(false)
@@ -78,6 +82,13 @@
 		const remain = Math.max(0, s.shakeDurationMs - s.elapsedMs)
 		return Math.ceil(remain / 1000)
 	})
+
+	const containerStyle = computed(() => ({ backgroundColor: tokens.value.bg }))
+	const bigEmojiStyle = computed(() => ({ textShadow: tokens.value.emojiShadow }))
+	const countStyle = computed(() => ({ color: tokens.value.primary }))
+	const trophyStyle = computed(() => ({ color: tokens.value.success }))
+	const skullStyle = computed(() => ({ color: tokens.value.danger }))
+	const mutedStyle = computed(() => ({ color: tokens.value.textMuted }))
 
 	function update() {
 		snap.value = game.value!.getSnapshot()
@@ -238,7 +249,6 @@
 		padding: 24px 20px;
 		min-height: 100vh;
 		align-items: center;
-		background-color: #FFF5EB;
 	}
 	.big { font-size: 100px; }
 	.title {
@@ -258,7 +268,6 @@
 	.count {
 		font-size: 48px;
 		font-weight: bold;
-		color: #FF6B9D;
 	}
 	.shaking {
 		align-items: center;
@@ -267,15 +276,12 @@
 	.big-count {
 		font-size: 80px;
 		font-weight: bold;
-		color: #FF6B9D;
 	}
 	.remaining {
 		font-size: 18px;
-		color: #7A6A87;
 		margin-top: 8px;
 	}
 	.hint {
-		color: #7A6A87;
 		margin: 12px 0;
 	}
 	.result {
@@ -285,16 +291,13 @@
 	.trophy {
 		font-size: 22px;
 		font-weight: bold;
-		color: #7ED957;
 	}
 	.skull {
 		font-size: 20px;
 		font-weight: bold;
-		color: #FF6B9D;
 		margin-top: 8px;
 	}
 	.counts {
 		margin-top: 12px;
-		color: #7A6A87;
 	}
 </style>
