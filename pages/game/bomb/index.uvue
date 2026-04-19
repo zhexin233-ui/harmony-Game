@@ -1,0 +1,222 @@
+<template>
+	<view class="container" :class="{ urgent: urgencyLevel >= 2, warn: urgencyLevel === 1 }">
+		<text class="big" :class="{ pulse: state === 'ticking' }">💣</text>
+		<text class="title">定时炸弹</text>
+
+		<view v-if="state === 'ticking'" class="ticking">
+			<text class="hint">传递手机 · 点引线扣 1 秒</text>
+			<AppButton label="✂️ 剪引线" variant="primary" @tap="onCutFuse" />
+			<text class="cuts">已剪 {{ snap?.fuseCuts ?? 0 }} 次</text>
+		</view>
+
+		<view v-else-if="state === 'exploded'" class="exploded">
+			<text class="boom">💥 爆炸了！</text>
+			<text class="hint">手里拿着手机的人点自己</text>
+			<view class="who-grid">
+				<view v-for="i in session.playerCount" :key="i" class="who" @tap="claimLoser(i - 1)">
+					<text class="who-text">{{ session.displayNameOf(i - 1) }}</text>
+				</view>
+			</view>
+		</view>
+
+		<AppButton label="返回大厅" variant="ghost" @tap="onExit" />
+
+		<GamePausedOverlay
+			:visible="paused"
+			desc="已暂停，是否继续？"
+			@resume="onResume"
+			@restart="onRestart"
+			@exit="onExit"
+		/>
+	</view>
+</template>
+
+<script setup lang="uts">
+	import { ref, computed } from 'vue'
+	import AppButton from '@/components/AppButton.uvue'
+	import GamePausedOverlay from '@/components/GamePausedOverlay.uvue'
+	import { useSession } from '@/stores/session'
+	import { createBombGame, type BombGame, type BombSnapshot } from '@/games/bomb/logic'
+	import { preload, play } from '@/native/audio'
+	import { vibrateShort, vibrateLong } from '@/native/vibrator'
+	import { keepAwake, releaseAwake } from '@/native/screen'
+	import { GAME_SOUNDS } from '@/utils/game-sounds'
+
+	const session = useSession()
+	const game = ref<BombGame | null>(null)
+	const snap = ref<BombSnapshot | null>(null)
+	const paused = ref(false)
+
+	let tickTimer : number | null = null
+	let lastTickAt = 0
+	let lastTickSoundAt = 0
+
+	const state = computed(() => snap.value?.state ?? 'ready')
+	const urgencyLevel = computed(() => {
+		const s = snap.value
+		if (s == null || s.durationMs === 0) return 0
+		const ratio = s.elapsedMs / s.durationMs
+		if (ratio > 0.85) return 2
+		if (ratio > 0.6) return 1
+		return 0
+	})
+
+	function update() {
+		snap.value = game.value!.getSnapshot()
+	}
+
+	function startLoop() {
+		if (tickTimer != null) return
+		lastTickAt = Date.now()
+		lastTickSoundAt = 0
+		tickTimer = setInterval(() => {
+			const now = Date.now()
+			const delta = now - lastTickAt
+			lastTickAt = now
+			game.value?.tick(delta)
+			update()
+			const s = snap.value!
+			const urgent = urgencyLevel.value
+			const intervalMs = urgent >= 2 ? 250 : urgent === 1 ? 500 : 1000
+			if (now - lastTickSoundAt >= intervalMs) {
+				play('tick')
+				lastTickSoundAt = now
+			}
+			if (s.state === 'exploded') {
+				onExploded()
+			}
+		}, 100) as unknown as number
+	}
+
+	function stopLoop() {
+		if (tickTimer != null) {
+			clearInterval(tickTimer)
+			tickTimer = null
+		}
+	}
+
+	function onExploded() {
+		stopLoop()
+		play('explode')
+		vibrateLong()
+	}
+
+	function onCutFuse() {
+		vibrateShort()
+		play('click')
+		game.value?.cutFuse()
+		update()
+		if (snap.value?.state === 'exploded') onExploded()
+	}
+
+	function claimLoser(idx : number) {
+		if (idx < 0 || idx >= session.playerCount) return
+		game.value?.reportLoser(idx)
+		session.loser = idx
+		play('lose')
+		releaseAwake()
+		uni.redirectTo({ url: '/pages/game/result' })
+	}
+
+	function init() {
+		const g = createBombGame({})
+		g.start()
+		game.value = g
+		update()
+	}
+
+	function onResume() {
+		paused.value = false
+		if (snap.value?.state === 'ticking') startLoop()
+	}
+
+	function onRestart() {
+		paused.value = false
+		stopLoop()
+		init()
+		startLoop()
+	}
+
+	function onExit() {
+		stopLoop()
+		paused.value = false
+		releaseAwake()
+		session.exitToLobby()
+		uni.redirectTo({ url: '/pages/lobby/games' })
+	}
+
+	onLoad(() => {
+		preload(GAME_SOUNDS)
+		keepAwake()
+		init()
+		startLoop()
+	})
+
+	onUnload(() => {
+		stopLoop()
+		releaseAwake()
+	})
+
+	onHide(() => {
+		if (snap.value?.state === 'ticking') {
+			stopLoop()
+			paused.value = true
+		}
+	})
+</script>
+
+<style>
+	.container {
+		padding: 32px 20px;
+		min-height: 100vh;
+		align-items: center;
+		justify-content: center;
+		background-color: #FFF5EB;
+	}
+	.container.warn { background-color: #FFE0B2; }
+	.container.urgent { background-color: #FFB0B0; }
+	.big { font-size: 120px; }
+	.pulse { }
+	.title {
+		font-size: 22px;
+		font-weight: bold;
+		margin-top: 8px;
+	}
+	.ticking {
+		align-items: center;
+		margin-top: 16px;
+		width: 100%;
+	}
+	.hint {
+		color: #7A6A87;
+		margin: 12px 0;
+	}
+	.cuts {
+		margin-top: 8px;
+		color: #7A6A87;
+	}
+	.exploded {
+		align-items: center;
+		margin-top: 16px;
+		width: 100%;
+	}
+	.boom {
+		font-size: 28px;
+		font-weight: bold;
+		color: #FF6B9D;
+		margin: 16px 0;
+	}
+	.who-grid {
+		flex-direction: row;
+		flex-wrap: wrap;
+		justify-content: center;
+		width: 100%;
+	}
+	.who {
+		padding: 12px 18px;
+		margin: 6px;
+		border-radius: 16px;
+		background-color: #FFE5F1;
+	}
+	.who-text { font-weight: bold; }
+</style>
