@@ -5,6 +5,12 @@
 			"style": {
 				"navigationBarTitleText": "Spike"
 			}
+		},
+		{
+			"path": "pages/onboarding/index",
+			"style": {
+				"navigationStyle": "custom"
+			}
 		}
 	],
 	"globalStyle": {
