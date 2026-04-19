@@ -9,9 +9,9 @@
 	],
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
-		"navigationBarTitleText": "uni-app x",
-		"navigationBarBackgroundColor": "#F8F8F8",
-		"backgroundColor": "#F8F8F8"
+		"navigationBarTitleText": "派对小游戏",
+		"navigationBarBackgroundColor": "#FFFFFF",
+		"backgroundColor": "#FFF5EB"
 	},
 	"uniIdRouter": {}
 }

@@ -1,10 +1,14 @@
 <script setup lang="uts">
+	import { useSettings } from '@/stores/settings'
+
 	// #ifdef APP-ANDROID || APP-HARMONY
 	let firstBackTime = 0
 	// #endif
 
 	onLaunch(() => {
 		console.log('App Launch')
+		const settings = useSettings()
+		settings.load()
 	})
 
 	onAppShow(() => {
@@ -47,5 +51,11 @@
 
 	.uni-column {
 		flex-direction: column;
+	}
+
+	/* 主题色通过 CSS 变量派生；退路方案见 Task 1.22（组件内 computed 读取 store） */
+	page {
+		background-color: var(--bg, #FFF5EB);
+		color: var(--text, #3D2F4F);
 	}
 </style>
