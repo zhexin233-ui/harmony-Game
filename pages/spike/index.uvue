@@ -1,0 +1,45 @@
+<template>
+	<view class="container">
+		<text class="title">原生能力 Spike</text>
+		<button class="btn" @click="testVibrate">1. 测试振动</button>
+		<button class="btn" @click="testAudio">2. 测试音效</button>
+		<button class="btn" @click="testSensor">3. 测试加速度传感器</button>
+		<button class="btn" @click="testMultitouch">4. 测试多指触控（按住下方区域）</button>
+		<text class="log">{{ log }}</text>
+		<view class="touch-area"
+			@touchstart="onTouchStart"
+			@touchmove="onTouchMove"
+			@touchend="onTouchEnd">
+			<text>触控区（按手指）</text>
+			<text>当前触点数：{{ touchCount }}</text>
+		</view>
+	</view>
+</template>
+
+<script setup lang="uts">
+	const log = ref('（等待操作）')
+	const touchCount = ref(0)
+
+	function testVibrate() { log.value = '见 Task 0.3' }
+	function testAudio() { log.value = '见 Task 0.4' }
+	function testSensor() { log.value = '见 Task 0.5' }
+	function testMultitouch() { log.value = '请在下方区域多指触摸' }
+
+	function onTouchStart(e : TouchEvent) { touchCount.value = e.touches.length }
+	function onTouchMove(e : TouchEvent) { touchCount.value = e.touches.length }
+	function onTouchEnd(e : TouchEvent) { touchCount.value = e.touches.length }
+</script>
+
+<style>
+	.container { padding: 24px; }
+	.title { font-size: 22px; font-weight: bold; margin-bottom: 16px; }
+	.btn { margin-top: 8px; }
+	.log { margin-top: 16px; color: #555555; }
+	.touch-area {
+		margin-top: 16px;
+		height: 200px;
+		background-color: #EEEEEE;
+		justify-content: center;
+		align-items: center;
+	}
+</style>
