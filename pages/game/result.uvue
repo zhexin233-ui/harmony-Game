@@ -15,7 +15,7 @@
 
 <script setup lang="uts">
 	import AppButton from '@/components/AppButton.uvue'
-	import { useSession } from '@/stores/session'
+	import { useSession, type GameId } from '@/stores/session'
 
 	const session = useSession()
 	const placeholders = [
@@ -31,7 +31,18 @@
 	function restart() {
 		session.restartGame()
 		const id = session.currentGame
-		if (id != null) uni.redirectTo({ url: `/pages/game/placeholder?id=${id}` })
+		if (id == null) {
+			uni.redirectTo({ url: '/pages/lobby/games' })
+			return
+		}
+		const pathMap : Record<GameId, string> = {
+			'bomb':        '/pages/game/bomb/index',
+			'crocodile':   '/pages/game/crocodile/index',
+			'horse-race':  '/pages/game/horse-race/index',
+			'wheel':       '/pages/game/wheel/index',
+			'reaction':    '/pages/game/reaction/index'
+		}
+		uni.redirectTo({ url: pathMap[id] })
 	}
 	function toLobby() {
 		session.exitToLobby()

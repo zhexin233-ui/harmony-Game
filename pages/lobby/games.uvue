@@ -58,7 +58,14 @@
 	function enter(g : GameMeta) {
 		if (!canPlay(g)) return
 		session.currentGame = g.id
-		uni.navigateTo({ url: `/pages/game/placeholder?id=${g.id}` })
+		const pathMap : Record<GameId, string> = {
+			'bomb':        '/pages/game/bomb/index',
+			'crocodile':   '/pages/game/crocodile/index',
+			'horse-race':  '/pages/game/horse-race/index',
+			'wheel':       '/pages/game/wheel/index',
+			'reaction':    '/pages/game/reaction/index'
+		}
+		uni.navigateTo({ url: pathMap[g.id] })
 	}
 </script>
 
