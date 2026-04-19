@@ -42,6 +42,11 @@
     },
     "app-harmony" : {
         "distribute" : {
+            "icons" : {
+                "small" : "static/icons/icon-72.png",
+                "medium" : "static/icons/icon-114.png",
+                "large" : "static/icons/icon-216.png"
+            },
             "requestPermissions" : [
                 { "name" : "ohos.permission.VIBRATE" }
             ]
