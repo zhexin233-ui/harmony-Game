@@ -1,0 +1,218 @@
+<template>
+	<view class="container">
+		<text class="big">🎯</text>
+		<text class="title">指尖大轮盘</text>
+
+		<view
+			class="wheel"
+			@touchstart="onTouchStart"
+			@touchmove="onTouchMove"
+			@touchend="onTouchEnd"
+			@touchcancel="onTouchEnd"
+		>
+			<text class="wheel-emoji">🎡</text>
+			<view v-if="state === 'collecting'" class="collect-hint">
+				<text class="collect-line">请 {{ session.playerCount }} 根手指同时按在圆盘里</text>
+				<text class="collect-line">当前：{{ snap?.fingerIds?.length ?? 0 }} / {{ session.playerCount }}</text>
+			</view>
+			<text v-else-if="state === 'spinning'" class="spin-hint">
+				🔄 旋转中...
+			</text>
+			<text v-else-if="state === 'selected'" class="result-hint">
+				🎯 选中了 {{ session.displayNameOf(snap?.result?.loser ?? 0) }}！
+			</text>
+		</view>
+
+		<AppButton
+			v-if="state === 'selected'"
+			label="查看结果"
+			variant="primary"
+			@tap="goResult"
+		/>
+		<AppButton label="返回大厅" variant="ghost" @tap="onExit" />
+
+		<GamePausedOverlay
+			:visible="paused"
+			desc="已暂停（切后台会释放手指）"
+			@resume="onResume"
+			@restart="onRestart"
+			@exit="onExit"
+		/>
+	</view>
+</template>
+
+<script setup lang="uts">
+	import { ref, computed } from 'vue'
+	import AppButton from '@/components/AppButton.uvue'
+	import GamePausedOverlay from '@/components/GamePausedOverlay.uvue'
+	import { useSession } from '@/stores/session'
+	import { createWheelGame, type WheelGame, type WheelSnapshot } from '@/games/wheel/logic'
+	import { preload, play } from '@/native/audio'
+	import { vibrateShort, vibrateLong } from '@/native/vibrator'
+	import { keepAwake, releaseAwake } from '@/native/screen'
+	import { GAME_SOUNDS } from '@/utils/game-sounds'
+
+	const session = useSession()
+	const game = ref<WheelGame | null>(null)
+	const snap = ref<WheelSnapshot | null>(null)
+	const paused = ref(false)
+
+	let tickTimer : number | null = null
+	let lastTickAt = 0
+
+	const state = computed(() => snap.value?.state ?? 'collecting')
+
+	function update() {
+		snap.value = game.value!.getSnapshot()
+	}
+
+	function init() {
+		const raw = session.playerCount > 0 ? session.playerCount : 2
+		const count = Math.min(5, Math.max(2, raw))
+		game.value = createWheelGame({ playerCount: count })
+		update()
+	}
+
+	function onTouchStart(e : TouchEvent) {
+		if (snap.value?.state !== 'collecting') return
+		for (let i = 0; i < e.changedTouches.length; i++) {
+			const t = e.changedTouches[i]
+			game.value?.addFinger(t.identifier as number)
+		}
+		update()
+		const s = snap.value!
+		if (s.state === 'spinning') {
+			play('signal')
+			vibrateShort()
+			startLoop()
+		}
+	}
+
+	function onTouchMove(_e : TouchEvent) {
+		// 轮盘阶段不需要位置；保留 handler 以吃掉事件
+	}
+
+	function onTouchEnd(e : TouchEvent) {
+		if (snap.value?.state !== 'collecting') return
+		for (let i = 0; i < e.changedTouches.length; i++) {
+			const t = e.changedTouches[i]
+			game.value?.removeFinger(t.identifier as number)
+		}
+		update()
+	}
+
+	function startLoop() {
+		if (tickTimer != null) return
+		lastTickAt = Date.now()
+		tickTimer = setInterval(() => {
+			const now = Date.now()
+			const delta = now - lastTickAt
+			lastTickAt = now
+			game.value?.tick(delta)
+			update()
+			if (snap.value?.state === 'selected') onSelected()
+		}, 50) as unknown as number
+	}
+
+	function stopLoop() {
+		if (tickTimer != null) {
+			clearInterval(tickTimer)
+			tickTimer = null
+		}
+	}
+
+	function onSelected() {
+		stopLoop()
+		vibrateLong()
+		play('lose')
+	}
+
+	function goResult() {
+		const s = snap.value
+		if (s == null || s.result == null) return
+		session.loser = s.result.loser
+		stopLoop()
+		releaseAwake()
+		uni.redirectTo({ url: '/pages/game/result' })
+	}
+
+	function onResume() { paused.value = false; onRestart() }
+
+	function onRestart() {
+		paused.value = false
+		stopLoop()
+		init()
+	}
+
+	function onExit() {
+		paused.value = false
+		stopLoop()
+		releaseAwake()
+		session.exitToLobby()
+		uni.redirectTo({ url: '/pages/lobby/games' })
+	}
+
+	onLoad(() => {
+		preload(GAME_SOUNDS)
+		keepAwake()
+		init()
+	})
+
+	onUnload(() => {
+		stopLoop()
+		releaseAwake()
+	})
+
+	onHide(() => {
+		if (snap.value?.state !== 'selected') {
+			stopLoop()
+			paused.value = true
+		}
+	})
+</script>
+
+<style>
+	.container {
+		padding: 20px;
+		min-height: 100vh;
+		align-items: center;
+		background-color: #FFF5EB;
+	}
+	.big { font-size: 64px; }
+	.title {
+		font-size: 22px;
+		font-weight: bold;
+		margin-top: 4px;
+	}
+	.wheel {
+		width: 320px;
+		height: 320px;
+		border-radius: 160px;
+		margin: 24px 0;
+		background-color: #FFE5F1;
+		align-items: center;
+		justify-content: center;
+	}
+	.wheel-emoji { font-size: 100px; }
+	.collect-hint {
+		margin-top: 12px;
+		align-items: center;
+	}
+	.collect-line {
+		color: #7A6A87;
+		text-align: center;
+	}
+	.spin-hint {
+		margin-top: 12px;
+		font-size: 18px;
+		font-weight: bold;
+		color: #FF6B9D;
+	}
+	.result-hint {
+		margin-top: 12px;
+		font-size: 20px;
+		font-weight: bold;
+		color: #FF6B9D;
+		text-align: center;
+	}
+</style>
