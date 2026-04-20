@@ -1,14 +1,81 @@
 <template>
-	<view class="container">
-		<text class="logo">🎉 派对小游戏</text>
-		<AppButton label="▶ 开始玩" variant="primary" @tap="goStart" />
-		<AppButton label="📋 惩罚规则" variant="secondary" @tap="goPunishment" />
-		<AppButton label="⚙️ 设置" variant="ghost" @tap="goSettings" />
+	<view class="page" :style="pageStyle">
+		<UiTopBar title="派对游乐场" subtitle="今晚从这里开局" :showBack="false" rightIcon="☺" rightUrl="/pages/settings/index" />
+		<view class="decor decor-left" :style="decorPrimaryStyle"></view>
+		<view class="decor decor-right" :style="decorSecondaryStyle"></view>
+
+		<view class="main">
+			<view class="hero">
+				<text class="hero-title" :style="titleStyle">一起开玩</text>
+				<text class="hero-subtitle" :style="subtitleStyle">选人数、挑游戏、输家抽惩罚</text>
+			</view>
+
+			<view class="entry entry-primary" :style="heroCardStyle" @tap="goStart">
+				<view>
+					<text class="entry-title primary-text">开始玩</text>
+					<text class="entry-desc primary-text">进入人数选择</text>
+				</view>
+				<text class="entry-icon primary-text">▶</text>
+			</view>
+
+			<view class="entry entry-shift-right" :style="cardHighStyle" @tap="goPunishment">
+				<view class="round-icon danger-icon" :style="dangerIconStyle">
+					<text class="round-icon-text">⚡</text>
+				</view>
+				<view class="entry-copy">
+					<text class="entry-title" :style="entryTitleStyle">惩罚列表</text>
+					<text class="entry-desc" :style="entryDescStyle">管理输家挑战</text>
+				</view>
+				<text class="chevron" :style="entryDescStyle">›</text>
+			</view>
+
+			<view class="entry entry-shift-left" :style="cardAltStyle" @tap="goSettings">
+				<view class="round-icon" :style="softIconStyle">
+					<text class="round-icon-text">⚙</text>
+				</view>
+				<view class="entry-copy">
+					<text class="entry-title" :style="entryTitleStyle">设置</text>
+					<text class="entry-desc" :style="entryDescStyle">主题、音效、振动</text>
+				</view>
+				<text class="chevron" :style="entryDescStyle">›</text>
+			</view>
+		</view>
+
+		<BottomNavBar active="home" />
 	</view>
 </template>
 
 <script setup lang="uts">
-	import AppButton from '@/components/AppButton.uvue'
+	import { computed } from 'vue'
+	import UiTopBar from '@/components/UiTopBar.uvue'
+	import BottomNavBar from '@/components/BottomNavBar.uvue'
+	import { useSettings } from '@/stores/settings'
+	import { themes } from '@/theme/tokens'
+
+	const settings = useSettings()
+	const tokens = computed(() => themes[settings.theme])
+
+	const pageStyle = computed(() => ({ backgroundColor: tokens.value.bg }))
+	const titleStyle = computed(() => ({ color: tokens.value.text }))
+	const subtitleStyle = computed(() => ({ color: tokens.value.textMuted }))
+	const heroCardStyle = computed(() => ({
+		background: tokens.value.heroCardBg,
+		boxShadow: tokens.value.shadowSoft
+	}))
+	const cardHighStyle = computed(() => ({
+		backgroundColor: tokens.value.surfaceHigh,
+		boxShadow: tokens.value.shadowSoft
+	}))
+	const cardAltStyle = computed(() => ({
+		backgroundColor: tokens.value.surfaceHighest,
+		boxShadow: tokens.value.shadowSoft
+	}))
+	const entryTitleStyle = computed(() => ({ color: tokens.value.text }))
+	const entryDescStyle = computed(() => ({ color: tokens.value.textMuted }))
+	const dangerIconStyle = computed(() => ({ backgroundColor: tokens.value.danger }))
+	const softIconStyle = computed(() => ({ backgroundColor: tokens.value.surfaceLow }))
+	const decorPrimaryStyle = computed(() => ({ backgroundColor: tokens.value.decorPrimary }))
+	const decorSecondaryStyle = computed(() => ({ backgroundColor: tokens.value.decorSecondary }))
 
 	function goStart() { uni.navigateTo({ url: '/pages/lobby/player-count' }) }
 	function goPunishment() { uni.navigateTo({ url: '/pages/punishment/index' }) }
@@ -16,16 +83,100 @@
 </script>
 
 <style>
-	.container {
-		padding: 48px 24px;
+	.page {
+		flex: 1;
+		min-height: 100%;
+		padding-bottom: 98px;
+		position: relative;
+		overflow: hidden;
+	}
+	.main {
 		flex: 1;
 		justify-content: center;
+		padding: 34px 24px 20px 24px;
 	}
-	.logo {
+	.hero {
+		align-items: center;
+		margin-bottom: 26px;
+	}
+	.hero-title {
+		font-size: 48px;
+		line-height: 54px;
+		font-weight: 900;
 		text-align: center;
-		font-size: 30px;
+	}
+	.hero-subtitle {
+		margin-top: 8px;
+		font-size: 16px;
+		text-align: center;
+	}
+	.entry {
+		border-radius: 30px;
+		margin-top: 16px;
+		padding: 22px;
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
+	}
+	.entry-primary {
+		min-height: 116px;
+	}
+	.entry-shift-right {
+		transform: translateX(8px);
+	}
+	.entry-shift-left {
+		transform: translateX(-8px);
+	}
+	.primary-text {
+		color: #ffffff;
+	}
+	.entry-title {
+		font-size: 22px;
+		font-weight: 900;
+	}
+	.entry-desc {
+		margin-top: 4px;
+		font-size: 13px;
+	}
+	.entry-icon {
+		font-size: 42px;
 		font-weight: bold;
-		margin-bottom: 40px;
-		color: var(--text, #3D2F4F);
+	}
+	.entry-copy {
+		flex: 1;
+		margin-left: 14px;
+	}
+	.round-icon {
+		width: 58px;
+		height: 58px;
+		border-radius: 29px;
+		align-items: center;
+		justify-content: center;
+	}
+	.round-icon-text {
+		font-size: 28px;
+		color: #ffffff;
+	}
+	.danger-icon .round-icon-text {
+		color: #ffffff;
+	}
+	.chevron {
+		font-size: 28px;
+		font-weight: bold;
+	}
+	.decor {
+		position: absolute;
+		width: 150px;
+		height: 150px;
+		border-radius: 75px;
+		opacity: 0.65;
+	}
+	.decor-left {
+		left: -50px;
+		top: 150px;
+	}
+	.decor-right {
+		right: -52px;
+		bottom: 150px;
 	}
 </style>
