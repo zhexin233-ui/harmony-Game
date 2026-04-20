@@ -1,89 +1,158 @@
 <template>
-	<view class="container">
-		<text class="hint">人数：{{ session.playerCount }}</text>
+	<view class="page" :style="pageStyle">
+		<UiTopBar title="选择游戏" :subtitle="'当前 ' + session.playerCount + ' 人'" rightIcon="⌂" rightUrl="/pages/home/index" />
 
-		<text class="category">🎲 运气派</text>
-		<view class="grid">
-			<GameTile v-for="g in luck" :key="g.id"
-				:emoji="g.emoji" :name="g.name"
-				:hint="disabledReason(g)"
-				:disabled="!canPlay(g)"
-				@tap="enter(g)" />
+		<view class="content">
+			<view class="header-row">
+				<text class="page-title" :style="titleStyle">游戏大厅</text>
+				<view class="filter-wrap" :style="filterWrapStyle">
+					<view
+						v-for="item in filters"
+						:key="item.id"
+						class="filter-chip"
+						:style="filter === item.id ? activeFilterStyle : inactiveFilterStyle"
+						@tap="filter = item.id"
+					>
+						<text class="filter-text" :style="filter === item.id ? activeFilterTextStyle : inactiveFilterTextStyle">{{ item.label }}</text>
+					</view>
+				</view>
+			</view>
+
+			<scroll-view scroll-y class="scroll">
+				<view v-for="group in groups" :key="group.category" class="group">
+					<view class="group-title-row">
+						<text class="group-icon">{{ group.icon }}</text>
+						<text class="group-title" :style="groupTitleStyle">{{ group.title }}</text>
+					</view>
+					<view class="game-grid">
+						<GameImageCard
+							v-for="game in group.games"
+							:key="game.id"
+							:id="game.id"
+							:name="game.name"
+							:summary="game.summary"
+							:emoji="game.emoji"
+							:cover="game.cover"
+							:min="game.min"
+							:max="game.max"
+							:disabled="!canPlay(game)"
+							:disabledReason="disabledReason(game)"
+							@tap="enter(game)"
+						/>
+					</view>
+				</view>
+			</scroll-view>
 		</view>
 
-		<text class="category">⚔️ 实力派</text>
-		<view class="grid">
-			<GameTile v-for="g in skill" :key="g.id"
-				:emoji="g.emoji" :name="g.name"
-				:hint="disabledReason(g)"
-				:disabled="!canPlay(g)"
-				@tap="enter(g)" />
-		</view>
+		<BottomNavBar active="games" />
 	</view>
 </template>
 
 <script setup lang="uts">
-	import GameTile from '@/components/GameTile.uvue'
-	import { useSession, type GameId } from '@/stores/session'
-
-	type GameMeta = {
-		id : GameId
-		emoji : string
-		name : string
-		min : number
-		max : number
-	}
-
-	const luck : GameMeta[] = [
-		{ id: 'bomb', emoji: '💣', name: '定时炸弹', min: 2, max: 8 },
-		{ id: 'crocodile', emoji: '🐊', name: '鳄鱼拔牙', min: 2, max: 8 },
-		{ id: 'wheel', emoji: '🎯', name: '指尖大轮盘', min: 2, max: 5 }
-	]
-	const skill : GameMeta[] = [
-		{ id: 'horse-race', emoji: '🐎', name: '摇一摇赛马', min: 2, max: 8 },
-		{ id: 'reaction', emoji: '👆', name: '同屏反应大比拼', min: 2, max: 5 }
-	]
+	import { computed, ref } from 'vue'
+	import UiTopBar from '@/components/UiTopBar.uvue'
+	import BottomNavBar from '@/components/BottomNavBar.uvue'
+	import GameImageCard from '@/components/GameImageCard.uvue'
+	import { useSession } from '@/stores/session'
+	import { useSettings } from '@/stores/settings'
+	import { themes } from '@/theme/tokens'
+	import {
+		canPlayGame,
+		getDisabledReason,
+		getGameRoute,
+		getVisibleGameGroups,
+		type GameFilter,
+		type GameMeta
+	} from '@/ui/games'
 
 	const session = useSession()
+	const settings = useSettings()
+	const filter = ref<GameFilter>('all')
+	const tokens = computed(() => themes[settings.theme])
+	const groups = computed(() => getVisibleGameGroups(filter.value))
+	const filters = [
+		{ id: 'all' as GameFilter, label: '全部' },
+		{ id: 'luck' as GameFilter, label: '运气派' },
+		{ id: 'skill' as GameFilter, label: '实力派' }
+	]
 
-	function canPlay(g : GameMeta) : boolean {
-		return session.playerCount >= g.min && session.playerCount <= g.max
+	const pageStyle = computed(() => ({ backgroundColor: tokens.value.bg }))
+	const titleStyle = computed(() => ({ color: tokens.value.primary }))
+	const filterWrapStyle = computed(() => ({ backgroundColor: tokens.value.surfaceHighest }))
+	const activeFilterStyle = computed(() => ({ backgroundColor: tokens.value.primary }))
+	const inactiveFilterStyle = computed(() => ({ backgroundColor: 'transparent' }))
+	const activeFilterTextStyle = computed(() => ({ color: tokens.value.onPrimary }))
+	const inactiveFilterTextStyle = computed(() => ({ color: tokens.value.textMuted }))
+	const groupTitleStyle = computed(() => ({ color: tokens.value.text }))
+
+	function canPlay(game : GameMeta) : boolean {
+		return canPlayGame(game, session.playerCount)
 	}
-	function disabledReason(g : GameMeta) : string | undefined {
-		if (canPlay(g)) return undefined
-		if (session.playerCount > g.max) return `最多 ${g.max} 人`
-		if (session.playerCount < g.min) return `至少 ${g.min} 人`
-		return undefined
+	function disabledReason(game : GameMeta) : string | undefined {
+		return getDisabledReason(game, session.playerCount)
 	}
-	function enter(g : GameMeta) {
-		if (!canPlay(g)) return
-		session.currentGame = g.id
-		const pathMap : Record<GameId, string> = {
-			'bomb':        '/pages/game/bomb/index',
-			'crocodile':   '/pages/game/crocodile/index',
-			'horse-race':  '/pages/game/horse-race/index',
-			'wheel':       '/pages/game/wheel/index',
-			'reaction':    '/pages/game/reaction/index'
-		}
-		uni.navigateTo({ url: pathMap[g.id] })
+	function enter(game : GameMeta) {
+		if (!canPlay(game)) return
+		session.currentGame = game.id
+		uni.navigateTo({ url: getGameRoute(game.id) })
 	}
 </script>
 
 <style>
-	.container { padding: 20px; }
-	.hint {
-		color: var(--text-muted, #7A6A87);
-		margin-bottom: 12px;
+	.page {
+		flex: 1;
+		min-height: 100%;
+		padding-bottom: 92px;
 	}
-	.category {
-		margin-top: 12px;
-		font-size: 16px;
-		font-weight: bold;
-		color: var(--text, #3D2F4F);
+	.content {
+		flex: 1;
+		padding: 24px 16px 0 16px;
 	}
-	.grid {
+	.header-row {
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 20px;
+	}
+	.page-title {
+		font-size: 28px;
+		font-weight: 900;
+	}
+	.filter-wrap {
+		flex-direction: row;
+		border-radius: 20px;
+		padding: 4px;
+	}
+	.filter-chip {
+		border-radius: 16px;
+		padding: 7px 10px;
+	}
+	.filter-text {
+		font-size: 12px;
+		font-weight: 800;
+	}
+	.scroll {
+		flex: 1;
+	}
+	.group {
+		margin-bottom: 30px;
+	}
+	.group-title-row {
+		flex-direction: row;
+		align-items: center;
+		margin-bottom: 14px;
+	}
+	.group-icon {
+		font-size: 22px;
+		margin-right: 8px;
+	}
+	.group-title {
+		font-size: 20px;
+		font-weight: 900;
+	}
+	.game-grid {
 		flex-direction: row;
 		flex-wrap: wrap;
-		margin-top: 8px;
+		justify-content: space-between;
 	}
 </style>
