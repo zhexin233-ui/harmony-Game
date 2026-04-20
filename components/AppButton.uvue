@@ -1,5 +1,5 @@
 <template>
-	<view class="app-btn" :style="containerStyle" :class="{ disabled: disabled }" @tap="onTap">
+	<view class="app-btn" :style="containerStyle" :class="{ disabled: disabled, block: block }" @tap="onTap">
 		<text class="label" :style="labelStyle">{{ label }}</text>
 	</view>
 </template>
@@ -13,6 +13,7 @@
 		label : string
 		variant ?: 'primary' | 'secondary' | 'ghost'
 		disabled ?: boolean
+		block ?: boolean
 	}>()
 	const emit = defineEmits<{ (e : 'tap') : void }>()
 
@@ -20,19 +21,36 @@
 	const tokens = computed(() => themes[settings.theme])
 
 	const containerStyle = computed(() => {
-		const v = props.variant ?? 'primary'
-		const bg = v === 'secondary' ? tokens.value.secondary
-			: v === 'ghost' ? 'transparent'
-				: tokens.value.primary
+		const variant = props.variant ?? 'primary'
+		if (variant === 'ghost') {
+			return {
+				backgroundColor: 'transparent',
+				borderWidth: '1px',
+				borderColor: tokens.value.outlineSoft,
+				boxShadow: 'none'
+			}
+		}
+		if (variant === 'secondary') {
+			return {
+				backgroundColor: tokens.value.surfaceHigh,
+				borderWidth: '0px',
+				borderColor: tokens.value.surfaceHigh,
+				boxShadow: tokens.value.shadowSoft
+			}
+		}
 		return {
-			backgroundColor: bg,
-			borderWidth: v === 'ghost' ? '1px' : '0px',
-			borderColor: tokens.value.primary
+			backgroundColor: tokens.value.primary,
+			borderWidth: '0px',
+			borderColor: tokens.value.primary,
+			boxShadow: tokens.value.shadowSoft
 		}
 	})
+
 	const labelStyle = computed(() => {
-		const v = props.variant ?? 'primary'
-		return { color: v === 'ghost' ? tokens.value.primary : '#FFFFFF' }
+		const variant = props.variant ?? 'primary'
+		if (variant === 'primary') return { color: tokens.value.onPrimary }
+		if (variant === 'secondary') return { color: tokens.value.text }
+		return { color: tokens.value.primary }
 	})
 
 	function onTap() {
@@ -43,15 +61,20 @@
 
 <style>
 	.app-btn {
-		padding: 14px 24px;
-		border-radius: 22px;
+		padding: 15px 24px;
+		border-radius: 24px;
 		align-items: center;
 		justify-content: center;
-		margin-top: 8px;
+		margin-top: 10px;
+	}
+	.app-btn.block {
+		width: 100%;
 	}
 	.label {
 		font-size: 16px;
-		font-weight: bold;
+		font-weight: 800;
 	}
-	.disabled { opacity: 0.4; }
+	.disabled {
+		opacity: 0.42;
+	}
 </style>

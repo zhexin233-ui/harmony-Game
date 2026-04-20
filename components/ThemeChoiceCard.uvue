@@ -1,0 +1,110 @@
+<template>
+	<view class="theme-card" :class="{ active: active, neon: tone === 'neon' }" :style="cardStyle" @tap="onTap">
+		<view class="theme-badge" :style="badgeStyle">
+			<text class="theme-emoji" :style="emojiStyle">{{ emoji }}</text>
+		</view>
+		<text class="theme-title" :style="titleStyle">{{ title }}</text>
+		<text class="theme-subtitle" :style="subtitleStyle">{{ subtitle }}</text>
+		<view class="theme-check" :style="checkStyle">
+			<text class="theme-check-text" :style="checkTextStyle">{{ active ? '✓' : '○' }}</text>
+		</view>
+	</view>
+</template>
+
+<script setup lang="uts">
+	import { computed } from 'vue'
+	import { useSettings } from '@/stores/settings'
+	import { themes } from '@/theme/tokens'
+	import type { Theme } from '@/theme/tokens'
+
+	const props = defineProps<{
+		theme : Theme
+		title : string
+		subtitle : string
+		emoji : string
+		tone : 'soft' | 'neon'
+		active : boolean
+	}>()
+
+	const emit = defineEmits<{ (e : 'pick', theme : Theme) : void }>()
+
+	const settings = useSettings()
+	const tokens = computed(() => themes[settings.theme])
+
+	const cardStyle = computed(() => ({
+		backgroundColor: props.tone === 'neon' ? themes.neon.surface : tokens.value.surfaceHighest,
+		borderColor: props.active ? tokens.value.primary : tokens.value.outlineSoft,
+		boxShadow: props.active ? tokens.value.shadowSoft : 'none'
+	}))
+	const badgeStyle = computed(() => ({
+		backgroundColor: props.tone === 'neon' ? themes.neon.surfaceHigh : tokens.value.surfaceHigh
+	}))
+	const emojiStyle = computed(() => ({
+		textShadow: props.tone === 'neon' ? themes.neon.emojiShadow : 'none'
+	}))
+	const titleStyle = computed(() => ({
+		color: props.tone === 'neon' ? themes.neon.text : tokens.value.text
+	}))
+	const subtitleStyle = computed(() => ({
+		color: props.tone === 'neon' ? themes.neon.textMuted : tokens.value.textMuted
+	}))
+	const checkStyle = computed(() => ({
+		backgroundColor: props.active ? tokens.value.navActiveBg : tokens.value.surfaceLow
+	}))
+	const checkTextStyle = computed(() => ({
+		color: props.active ? tokens.value.navActiveText : tokens.value.textMuted
+	}))
+
+	function onTap() {
+		emit('pick', props.theme)
+	}
+</script>
+
+<style>
+	.theme-card {
+		position: relative;
+		min-height: 210px;
+		border-radius: 28px;
+		border-width: 1px;
+		border-style: solid;
+		align-items: center;
+		justify-content: center;
+		padding: 24px;
+		margin-top: 16px;
+	}
+	.theme-badge {
+		width: 82px;
+		height: 82px;
+		border-radius: 41px;
+		align-items: center;
+		justify-content: center;
+		margin-bottom: 14px;
+	}
+	.theme-emoji {
+		font-size: 42px;
+	}
+	.theme-title {
+		font-size: 25px;
+		font-weight: 800;
+		text-align: center;
+	}
+	.theme-subtitle {
+		margin-top: 6px;
+		font-size: 14px;
+		text-align: center;
+	}
+	.theme-check {
+		position: absolute;
+		right: 16px;
+		top: 16px;
+		width: 30px;
+		height: 30px;
+		border-radius: 15px;
+		align-items: center;
+		justify-content: center;
+	}
+	.theme-check-text {
+		font-size: 16px;
+		font-weight: bold;
+	}
+</style>

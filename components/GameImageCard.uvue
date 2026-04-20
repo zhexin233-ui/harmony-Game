@@ -1,0 +1,136 @@
+<template>
+	<view class="game-card" :class="{ disabled: disabled }" :style="cardStyle" @tap="onTap">
+		<view class="cover" :style="coverStyle">
+			<image
+				v-if="coverMode === 'image'"
+				class="cover-image"
+				:src="coverValue"
+				mode="aspectFit"
+				@error="onImageError"
+			/>
+			<text v-else class="cover-emoji" :style="emojiStyle">{{ coverValue }}</text>
+			<view class="players-pill" :style="pillStyle">
+				<text class="players-text" :style="pillTextStyle">{{ min }}-{{ max }} 人</text>
+			</view>
+		</view>
+		<text class="game-name" :style="nameStyle">{{ name }}</text>
+		<text class="game-summary" :style="summaryStyle">{{ disabledReason || summary }}</text>
+	</view>
+</template>
+
+<script setup lang="uts">
+	import { computed, ref } from 'vue'
+	import { useSettings } from '@/stores/settings'
+	import { themes } from '@/theme/tokens'
+
+	const props = defineProps<{
+		id : string
+		name : string
+		summary : string
+		emoji : string
+		cover : string
+		min : number
+		max : number
+		disabled ?: boolean
+		disabledReason ?: string
+	}>()
+
+	const emit = defineEmits<{
+		(e : 'tap') : void
+		(e : 'imageError', id : string) : void
+	}>()
+
+	const settings = useSettings()
+	const tokens = computed(() => themes[settings.theme])
+	const imageFailed = ref(false)
+
+	const coverMode = computed(() => imageFailed.value || props.cover.length === 0 ? 'emoji' : 'image')
+	const coverValue = computed(() => coverMode.value === 'image' ? props.cover : props.emoji)
+
+	const cardStyle = computed(() => ({
+		backgroundColor: tokens.value.cardBg,
+		boxShadow: tokens.value.shadowSoft,
+		opacity: props.disabled ? 0.56 : 1
+	}))
+	const coverStyle = computed(() => ({
+		backgroundColor: props.disabled ? tokens.value.disabledBg : tokens.value.imageCardBg
+	}))
+	const emojiStyle = computed(() => ({
+		textShadow: tokens.value.emojiShadow
+	}))
+	const pillStyle = computed(() => ({
+		backgroundColor: tokens.value.success
+	}))
+	const pillTextStyle = computed(() => ({
+		color: tokens.value.onSecondary
+	}))
+	const nameStyle = computed(() => ({
+		color: tokens.value.primary
+	}))
+	const summaryStyle = computed(() => ({
+		color: props.disabled ? tokens.value.dangerText : tokens.value.textMuted
+	}))
+
+	function onTap() {
+		if (props.disabled) return
+		emit('tap')
+	}
+
+	function onImageError() {
+		imageFailed.value = true
+		emit('imageError', props.id)
+	}
+</script>
+
+<style>
+	.game-card {
+		width: 48%;
+		min-height: 220px;
+		border-radius: 26px;
+		padding: 10px;
+		margin-bottom: 14px;
+		align-items: center;
+	}
+	.cover {
+		position: relative;
+		width: 100%;
+		aspect-ratio: 1;
+		border-radius: 20px;
+		align-items: center;
+		justify-content: center;
+		overflow: hidden;
+	}
+	.cover-image {
+		width: 100%;
+		height: 100%;
+	}
+	.cover-emoji {
+		font-size: 48px;
+	}
+	.players-pill {
+		position: absolute;
+		right: 8px;
+		top: 8px;
+		border-radius: 14px;
+		padding: 3px 8px;
+	}
+	.players-text {
+		font-size: 11px;
+		font-weight: bold;
+	}
+	.game-name {
+		margin-top: 10px;
+		font-size: 17px;
+		font-weight: 800;
+		text-align: center;
+	}
+	.game-summary {
+		margin-top: 4px;
+		font-size: 12px;
+		text-align: center;
+		line-height: 17px;
+	}
+	.disabled {
+		filter: grayscale(20%);
+	}
+</style>
