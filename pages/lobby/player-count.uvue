@@ -1,56 +1,189 @@
 <template>
-	<view class="container">
-		<text class="title">有几个人玩？</text>
-		<view class="grid">
-			<view v-for="n in counts" :key="n" class="num" :class="{ active: picked === n }" @tap="picked = n">
-				<text>{{ n }}</text>
+	<view class="page" :style="pageStyle">
+		<UiTopBar title="选择人数" subtitle="2 到 8 人都可以玩" rightIcon="⌂" rightUrl="/pages/home/index" />
+		<view class="decor decor-left" :style="decorPrimaryStyle"></view>
+		<view class="decor decor-right" :style="decorSecondaryStyle"></view>
+
+		<view class="main">
+			<view class="hero">
+				<text class="title" :style="titleStyle">有几个人玩？</text>
+				<text class="subtitle" :style="subtitleStyle">先定人数，下一步可输入名字</text>
+			</view>
+
+			<view class="selector-card" :style="cardStyle">
+				<view class="selector-row">
+					<view class="circle-btn" :style="minusStyle" @tap="minus">
+						<text class="circle-text" :style="minusTextStyle">−</text>
+					</view>
+					<view class="number-wrap">
+						<view class="number-glow" :style="glowStyle"></view>
+						<text class="number" :style="numberStyle">{{ picked }}</text>
+					</view>
+					<view class="circle-btn" :style="plusStyle" @tap="plus">
+						<text class="circle-text" :style="plusTextStyle">＋</text>
+					</view>
+				</view>
+				<view class="range-pill" :style="rangeStyle">
+					<text class="range-text" :style="rangeTextStyle">2 - 8 人</text>
+				</view>
+			</view>
+
+			<AppButton label="下一步 · 输入名字" variant="primary" :block="true" @tap="next" />
+			<view class="skip" @tap="skip">
+				<text class="skip-text" :style="skipStyle">跳过名字，直接选游戏</text>
 			</view>
 		</view>
-		<AppButton label="下一步 · 可选输入名字" variant="primary" :disabled="picked === 0" @tap="next" />
-		<AppButton label="跳过名字 · 直接进大厅" variant="ghost" :disabled="picked === 0" @tap="skip" />
 	</view>
 </template>
 
 <script setup lang="uts">
+	import { computed, ref } from 'vue'
 	import AppButton from '@/components/AppButton.uvue'
+	import UiTopBar from '@/components/UiTopBar.uvue'
 	import { useSession } from '@/stores/session'
+	import { useSettings } from '@/stores/settings'
+	import { themes } from '@/theme/tokens'
+	import { buildPlayerNamesUrl, changePlayerCount, getInitialPlayerCount, getSkipNamesUrl } from '@/ui/player-count'
 
-	const counts = [2, 3, 4, 5, 6, 7, 8]
-	const picked = ref(0)
 	const session = useSession()
+	const settings = useSettings()
+	const picked = ref(getInitialPlayerCount(session.playerCount))
+	const tokens = computed(() => themes[settings.theme])
 
+	const pageStyle = computed(() => ({ backgroundColor: tokens.value.bg }))
+	const titleStyle = computed(() => ({ color: tokens.value.text }))
+	const subtitleStyle = computed(() => ({ color: tokens.value.textMuted }))
+	const cardStyle = computed(() => ({
+		backgroundColor: tokens.value.surfaceLow,
+		boxShadow: tokens.value.shadowSoft
+	}))
+	const minusStyle = computed(() => ({ backgroundColor: tokens.value.surfaceHighest }))
+	const plusStyle = computed(() => ({ backgroundColor: tokens.value.primary }))
+	const minusTextStyle = computed(() => ({ color: tokens.value.text }))
+	const plusTextStyle = computed(() => ({ color: tokens.value.onPrimary }))
+	const numberStyle = computed(() => ({ color: tokens.value.primary }))
+	const glowStyle = computed(() => ({ backgroundColor: tokens.value.decorPrimary }))
+	const rangeStyle = computed(() => ({ backgroundColor: tokens.value.surfaceHigh }))
+	const rangeTextStyle = computed(() => ({ color: tokens.value.textMuted }))
+	const skipStyle = computed(() => ({ color: tokens.value.primary }))
+	const decorPrimaryStyle = computed(() => ({ backgroundColor: tokens.value.decorPrimary }))
+	const decorSecondaryStyle = computed(() => ({ backgroundColor: tokens.value.decorSecondary }))
+
+	function minus() {
+		picked.value = changePlayerCount(picked.value, -1)
+	}
+	function plus() {
+		picked.value = changePlayerCount(picked.value, 1)
+	}
 	function next() {
 		session.setPlayers(picked.value)
-		uni.navigateTo({ url: `/pages/lobby/player-names?count=${picked.value}` })
+		uni.navigateTo({ url: buildPlayerNamesUrl(picked.value) })
 	}
 	function skip() {
 		session.setPlayers(picked.value)
-		uni.navigateTo({ url: '/pages/lobby/games' })
+		uni.navigateTo({ url: getSkipNamesUrl() })
 	}
 </script>
 
 <style>
-	.container { padding: 24px; }
-	.title {
-		font-size: 24px;
-		font-weight: bold;
-		text-align: center;
-		margin-bottom: 24px;
+	.page {
+		flex: 1;
+		min-height: 100%;
+		position: relative;
+		overflow: hidden;
 	}
-	.grid {
-		flex-direction: row;
-		flex-wrap: wrap;
+	.main {
+		flex: 1;
+		padding: 46px 24px 32px 24px;
 		justify-content: center;
-		margin-bottom: 24px;
 	}
-	.num {
-		width: 56px;
-		height: 56px;
-		border-radius: 28px;
-		margin: 6px;
-		justify-content: center;
+	.hero {
 		align-items: center;
-		background-color: var(--bg-end, #FFE5F1);
+		margin-bottom: 36px;
 	}
-	.num.active { background-color: var(--primary, #FF6B9D); }
+	.title {
+		font-size: 34px;
+		line-height: 40px;
+		font-weight: 900;
+		text-align: center;
+	}
+	.subtitle {
+		margin-top: 8px;
+		font-size: 16px;
+		text-align: center;
+	}
+	.selector-card {
+		border-radius: 34px;
+		padding: 30px 24px;
+		align-items: center;
+		margin-bottom: 26px;
+	}
+	.selector-row {
+		width: 100%;
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
+	}
+	.circle-btn {
+		width: 64px;
+		height: 64px;
+		border-radius: 32px;
+		align-items: center;
+		justify-content: center;
+	}
+	.circle-text {
+		font-size: 31px;
+		font-weight: 900;
+	}
+	.number-wrap {
+		position: relative;
+		width: 132px;
+		height: 132px;
+		align-items: center;
+		justify-content: center;
+	}
+	.number-glow {
+		position: absolute;
+		width: 112px;
+		height: 112px;
+		border-radius: 56px;
+		opacity: 0.5;
+	}
+	.number {
+		font-size: 72px;
+		line-height: 80px;
+		font-weight: 900;
+	}
+	.range-pill {
+		margin-top: 22px;
+		border-radius: 18px;
+		padding: 8px 18px;
+	}
+	.range-text {
+		font-size: 13px;
+		font-weight: 800;
+	}
+	.skip {
+		align-items: center;
+		padding: 14px;
+	}
+	.skip-text {
+		font-size: 14px;
+		font-weight: bold;
+	}
+	.decor {
+		position: absolute;
+		width: 180px;
+		height: 180px;
+		border-radius: 90px;
+		opacity: 0.5;
+	}
+	.decor-left {
+		left: -80px;
+		top: 190px;
+	}
+	.decor-right {
+		right: -85px;
+		top: 280px;
+	}
 </style>
