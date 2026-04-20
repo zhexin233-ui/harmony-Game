@@ -1,48 +1,80 @@
 <template>
-	<view class="container">
-		<view v-if="store.rules.length === 0" class="empty">
-			<text class="empty-emoji">📭</text>
-			<text class="empty-title">惩罚库为空</text>
-			<text class="empty-desc">添加一条规则开始玩。</text>
-			<AppButton label="＋ 新增" variant="primary" @tap="goAdd" />
-			<AppButton label="返回" variant="ghost" @tap="back" />
-		</view>
+	<view class="page" :style="pageStyle">
+		<UiTopBar title="惩罚列表" :subtitle="store.rules.length + ' 条规则'" rightIcon="⌂" rightUrl="/pages/home/index" />
+		<scroll-view scroll-y class="content">
+			<view class="hero-card" :style="heroCardStyle" @tap="goAdd">
+				<text class="hero-icon">＋</text>
+				<text class="hero-title">新增惩罚</text>
+				<text class="hero-desc">给输家加一条新的挑战</text>
+			</view>
 
-		<scroll-view v-else scroll-y class="list">
-			<view v-for="rule in store.rules" :key="rule.id" class="row">
-				<view class="row-main">
-					<text :class="{ 'text-disabled': !rule.enabled }" class="text">{{ rule.text }}</text>
-					<text class="badge">{{ rule.builtIn ? '内置' : '自定义' }}</text>
+			<view class="list-title-row">
+				<text class="list-title" :style="titleStyle">规则库</text>
+				<view class="count-pill" :style="pillStyle">
+					<text class="count-text" :style="pillTextStyle">{{ store.rules.length }} 条</text>
 				</view>
-				<view class="row-actions">
+			</view>
+
+			<view v-if="store.rules.length === 0" class="empty-card" :style="cardStyle">
+				<text class="empty-emoji">📭</text>
+				<text class="empty-title" :style="titleStyle">还没有惩罚</text>
+				<text class="empty-desc" :style="descStyle">先点上方卡片新增一条规则。</text>
+			</view>
+
+			<view v-for="rule in store.rules" :key="rule.id" class="rule-card" :style="cardStyle" :class="{ disabled: !rule.enabled }">
+				<view class="state-strip" :style="rule.enabled ? activeStripStyle : disabledStripStyle"></view>
+				<view class="rule-main">
+					<text class="rule-text" :class="{ disabledText: !rule.enabled }" :style="titleStyle">{{ rule.text }}</text>
+					<view class="badge" :style="badgeStyle">
+						<text class="badge-text" :style="badgeTextStyle">{{ rule.builtIn ? '内置' : '自定义' }}</text>
+					</view>
+				</view>
+				<view class="rule-actions">
 					<switch :checked="rule.enabled" @change="toggle(rule.id)" />
-					<text class="action" @tap="goEdit(rule.id)">编辑</text>
-					<text class="action action-danger" @tap="confirmRemove(rule)">删除</text>
+					<text class="action" :style="actionStyle" @tap="goEdit(rule.id)">编辑</text>
+					<text class="action" :style="dangerActionStyle" @tap="confirmRemove(rule)">删除</text>
 				</view>
 			</view>
 		</scroll-view>
-
-		<view v-if="store.rules.length > 0" class="footer">
-			<AppButton label="＋ 新增" variant="primary" @tap="goAdd" />
-			<AppButton label="返回" variant="ghost" @tap="back" />
-		</view>
+		<BottomNavBar active="punishment" />
 	</view>
 </template>
 
 <script setup lang="uts">
-	import AppButton from '@/components/AppButton.uvue'
+	import { computed } from 'vue'
+	import UiTopBar from '@/components/UiTopBar.uvue'
+	import BottomNavBar from '@/components/BottomNavBar.uvue'
 	import { usePunishment, type PunishmentRule } from '@/stores/punishment'
+	import { useSettings } from '@/stores/settings'
+	import { themes } from '@/theme/tokens'
 
 	const store = usePunishment()
+	const settings = useSettings()
+	const tokens = computed(() => themes[settings.theme])
+
+	const pageStyle = computed(() => ({ backgroundColor: tokens.value.bg }))
+	const heroCardStyle = computed(() => ({
+		background: tokens.value.heroCardBg,
+		boxShadow: tokens.value.shadowSoft
+	}))
+	const cardStyle = computed(() => ({
+		backgroundColor: tokens.value.cardBg,
+		boxShadow: tokens.value.shadowSoft
+	}))
+	const titleStyle = computed(() => ({ color: tokens.value.text }))
+	const descStyle = computed(() => ({ color: tokens.value.textMuted }))
+	const pillStyle = computed(() => ({ backgroundColor: tokens.value.success }))
+	const pillTextStyle = computed(() => ({ color: tokens.value.onSecondary }))
+	const badgeStyle = computed(() => ({ backgroundColor: tokens.value.surfaceLow }))
+	const badgeTextStyle = computed(() => ({ color: tokens.value.textMuted }))
+	const activeStripStyle = computed(() => ({ backgroundColor: tokens.value.success }))
+	const disabledStripStyle = computed(() => ({ backgroundColor: tokens.value.disabledBg }))
+	const actionStyle = computed(() => ({ color: tokens.value.primary }))
+	const dangerActionStyle = computed(() => ({ color: tokens.value.dangerText }))
 
 	function toggle(id: string) { store.toggleRule(id) }
-
-	function goAdd() {
-		uni.navigateTo({ url: '/pages/punishment/edit?mode=add' })
-	}
-	function goEdit(id: string) {
-		uni.navigateTo({ url: '/pages/punishment/edit?mode=edit&id=' + encodeURIComponent(id) })
-	}
+	function goAdd() { uni.navigateTo({ url: '/pages/punishment/edit?mode=add' }) }
+	function goEdit(id: string) { uni.navigateTo({ url: '/pages/punishment/edit?mode=edit&id=' + encodeURIComponent(id) }) }
 	function confirmRemove(rule: PunishmentRule) {
 		const extra = rule.builtIn ? '内置条目删除后下次升级不会重新出现。' : ''
 		uni.showModal({
@@ -53,62 +85,126 @@
 			}
 		})
 	}
-	function back() { uni.navigateBack({}) }
 </script>
 
 <style>
-	.container {
-		padding: 16px 16px 24px 16px;
+	.page {
 		flex: 1;
+		min-height: 100%;
+		padding-bottom: 94px;
 	}
-	.empty {
+	.content {
+		flex: 1;
+		padding: 22px 20px 0 20px;
+	}
+	.hero-card {
+		border-radius: 30px;
+		padding: 24px;
 		align-items: center;
-		padding: 40px 24px;
+		overflow: hidden;
 	}
-	.empty-emoji { font-size: 56px; }
-	.empty-title {
-		font-size: 20px;
-		font-weight: bold;
-		margin-top: 12px;
+	.hero-icon {
+		font-size: 44px;
+		color: #ffffff;
+		font-weight: 900;
 	}
-	.empty-desc {
-		color: var(--text-muted, #7A6A87);
-		margin: 10px 0 20px 0;
-		text-align: center;
+	.hero-title {
+		margin-top: 6px;
+		font-size: 24px;
+		color: #ffffff;
+		font-weight: 900;
 	}
-	.list { flex: 1; }
-	.row {
-		padding: 14px 12px;
-		border-bottom-width: 1px;
-		border-bottom-color: rgba(0,0,0,0.08);
-		border-bottom-style: solid;
+	.hero-desc {
+		margin-top: 4px;
+		font-size: 13px;
+		color: rgba(255, 255, 255, 0.9);
 	}
-	.row-main { flex-direction: row; align-items: center; }
-	.text {
-		flex: 1;
-		font-size: 16px;
-		color: var(--text, #3D2F4F);
-	}
-	.text-disabled { opacity: 0.4; }
-	.badge {
-		font-size: 11px;
-		color: var(--text-muted, #7A6A87);
-		margin-left: 8px;
-		padding: 2px 8px;
-		border-radius: 10px;
-		background-color: var(--bg-end, #FFE5F1);
-	}
-	.row-actions {
+	.list-title-row {
+		margin-top: 28px;
+		margin-bottom: 14px;
 		flex-direction: row;
 		align-items: center;
-		margin-top: 8px;
+		justify-content: space-between;
+	}
+	.list-title {
+		font-size: 20px;
+		font-weight: 900;
+	}
+	.count-pill {
+		border-radius: 14px;
+		padding: 4px 12px;
+	}
+	.count-text {
+		font-size: 11px;
+		font-weight: 800;
+	}
+	.empty-card {
+		border-radius: 24px;
+		padding: 28px;
+		align-items: center;
+	}
+	.empty-emoji {
+		font-size: 42px;
+	}
+	.empty-title {
+		margin-top: 10px;
+		font-size: 19px;
+		font-weight: 900;
+	}
+	.empty-desc {
+		margin-top: 6px;
+		font-size: 13px;
+		text-align: center;
+	}
+	.rule-card {
+		position: relative;
+		border-radius: 22px;
+		padding: 18px 16px 14px 22px;
+		margin-bottom: 14px;
+		overflow: hidden;
+	}
+	.rule-card.disabled {
+		opacity: 0.62;
+		transform: translateX(6px);
+	}
+	.state-strip {
+		position: absolute;
+		left: 0;
+		top: 0;
+		bottom: 0;
+		width: 7px;
+	}
+	.rule-main {
+		flex-direction: row;
+		align-items: center;
+	}
+	.rule-text {
+		flex: 1;
+		font-size: 16px;
+		font-weight: 800;
+		line-height: 22px;
+	}
+	.disabledText {
+		text-decoration: line-through;
+	}
+	.badge {
+		border-radius: 12px;
+		padding: 3px 8px;
+		margin-left: 10px;
+	}
+	.badge-text {
+		font-size: 11px;
+		font-weight: bold;
+	}
+	.rule-actions {
+		margin-top: 12px;
+		flex-direction: row;
+		align-items: center;
 		justify-content: flex-end;
 	}
 	.action {
-		margin-left: 16px;
-		color: var(--primary, #FF6B9D);
+		margin-left: 18px;
 		font-size: 14px;
+		font-weight: bold;
 	}
-	.action-danger { color: #E74C3C; }
-	.footer { margin-top: 16px; }
 </style>
