@@ -9,19 +9,19 @@
 		{
 			"path": "pages/home/index",
 			"style": {
-				"navigationBarTitleText": "首页"
+				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/settings/index",
 			"style": {
-				"navigationBarTitleText": "设置"
+				"navigationStyle": "custom"
 			}
 		},
 		{
 			"path": "pages/lobby/player-count",
 			"style": {
-				"navigationBarTitleText": "人数"
+				"navigationStyle": "custom"
 			}
 		},
 		{
@@ -33,7 +33,7 @@
 		{
 			"path": "pages/lobby/games",
 			"style": {
-				"navigationBarTitleText": "选游戏"
+				"navigationStyle": "custom"
 			}
 		},
 		{
@@ -75,7 +75,7 @@
 		{
 			"path": "pages/punishment/index",
 			"style": {
-				"navigationBarTitleText": "惩罚规则"
+				"navigationStyle": "custom"
 			}
 		},
 		{
