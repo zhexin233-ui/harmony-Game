@@ -5,6 +5,7 @@ import { themes } from '@/theme/tokens'
 describe('tokenToCssVar', () => {
   it('把驼峰 key 转为 --kebab-case', () => {
     expect(tokenToCssVar('textMuted')).toBe('--text-muted')
+    expect(tokenToCssVar('surfaceHighest')).toBe('--surface-highest')
     expect(tokenToCssVar('bg')).toBe('--bg')
   })
 })
@@ -33,12 +34,11 @@ describe('applyTheme', () => {
     })
   })
 
-  it('把 neon 的 warn/urgent/armedBg/signalBg/emojiShadow 也写入', () => {
-    applyTheme('neon', fakeRoot as unknown as HTMLElement)
-    expect(recorded['--warn']).toBe(themes.neon.warn)
-    expect(recorded['--urgent']).toBe(themes.neon.urgent)
-    expect(recorded['--armed-bg']).toBe(themes.neon.armedBg)
-    expect(recorded['--signal-bg']).toBe(themes.neon.signalBg)
-    expect(recorded['--emoji-shadow']).toBe(themes.neon.emojiShadow)
+  it('写入新版页面骨架 token', () => {
+    applyTheme('cartoon', fakeRoot as unknown as HTMLElement)
+    expect(recorded['--top-bar-bg']).toBe(themes.cartoon.topBarBg)
+    expect(recorded['--bottom-nav-bg']).toBe(themes.cartoon.bottomNavBg)
+    expect(recorded['--hero-card-bg']).toBe(themes.cartoon.heroCardBg)
+    expect(recorded['--image-card-bg']).toBe(themes.cartoon.imageCardBg)
   })
 })
