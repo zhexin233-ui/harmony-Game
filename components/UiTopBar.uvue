@@ -1,0 +1,107 @@
+<template>
+	<view class="ui-top-bar" :style="barStyle">
+		<view class="top-icon" :style="iconStyle" @tap="onBack">
+			<text class="top-icon-text" :style="iconTextStyle">{{ showBack ? '‹' : '🎲' }}</text>
+		</view>
+		<view class="top-title-wrap">
+			<text class="top-title" :style="titleStyle">{{ title }}</text>
+			<text v-if="subtitle" class="top-subtitle" :style="subtitleStyle">{{ subtitle }}</text>
+		</view>
+		<view class="top-icon" :style="iconStyle" @tap="onRight">
+			<text class="top-icon-text" :style="iconTextStyle">{{ rightIcon }}</text>
+		</view>
+	</view>
+</template>
+
+<script setup lang="uts">
+	import { computed } from 'vue'
+	import { useSettings } from '@/stores/settings'
+	import { themes } from '@/theme/tokens'
+
+	const props = defineProps<{
+		title : string
+		subtitle ?: string
+		showBack ?: boolean
+		rightIcon ?: string
+		rightUrl ?: string
+	}>()
+
+	const emit = defineEmits<{
+		(e : 'back') : void
+		(e : 'right') : void
+	}>()
+
+	const settings = useSettings()
+	const tokens = computed(() => themes[settings.theme])
+	const showBack = computed(() => props.showBack ?? true)
+	const rightIcon = computed(() => props.rightIcon ?? '⚙')
+
+	const barStyle = computed(() => ({
+		backgroundColor: tokens.value.topBarBg,
+		boxShadow: tokens.value.shadowSoft
+	}))
+	const iconStyle = computed(() => ({
+		backgroundColor: tokens.value.surfaceHigh
+	}))
+	const iconTextStyle = computed(() => ({
+		color: tokens.value.primary
+	}))
+	const titleStyle = computed(() => ({
+		color: tokens.value.text
+	}))
+	const subtitleStyle = computed(() => ({
+		color: tokens.value.textMuted
+	}))
+
+	function onBack() {
+		emit('back')
+		if (!showBack.value) return
+		uni.navigateBack({
+			delta: 1,
+			fail: () => uni.reLaunch({ url: '/pages/home/index' })
+		})
+	}
+
+	function onRight() {
+		emit('right')
+		if (props.rightUrl) uni.navigateTo({ url: props.rightUrl })
+	}
+</script>
+
+<style>
+	.ui-top-bar {
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
+		padding: 14px 20px;
+		border-bottom-left-radius: 26px;
+		border-bottom-right-radius: 26px;
+	}
+	.top-icon {
+		width: 42px;
+		height: 42px;
+		border-radius: 21px;
+		align-items: center;
+		justify-content: center;
+	}
+	.top-icon-text {
+		font-size: 22px;
+		font-weight: bold;
+	}
+	.top-title-wrap {
+		flex: 1;
+		align-items: center;
+		justify-content: center;
+		padding: 0 12px;
+	}
+	.top-title {
+		font-size: 20px;
+		font-weight: 800;
+		text-align: center;
+	}
+	.top-subtitle {
+		margin-top: 2px;
+		font-size: 12px;
+		text-align: center;
+	}
+</style>

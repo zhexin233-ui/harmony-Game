@@ -1,0 +1,93 @@
+<template>
+	<view class="bottom-nav" :style="navStyle">
+		<view
+			v-for="item in items"
+			:key="item.id"
+			class="nav-item"
+			:class="{ active: item.active }"
+			:style="item.active ? activeStyle : inactiveStyle"
+			@tap="tapItem(item.id)"
+		>
+			<text class="nav-icon" :style="item.active ? activeTextStyle : inactiveTextStyle">{{ item.icon }}</text>
+			<text class="nav-label" :style="item.active ? activeTextStyle : inactiveTextStyle">{{ item.label }}</text>
+		</view>
+	</view>
+</template>
+
+<script setup lang="uts">
+	import { computed } from 'vue'
+	import { useSettings } from '@/stores/settings'
+	import { themes } from '@/theme/tokens'
+	import { decideBottomNavAction, getBottomNavItems, type TopLevelPage } from '@/ui/navigation'
+
+	const props = defineProps<{
+		active : TopLevelPage
+	}>()
+
+	const settings = useSettings()
+	const tokens = computed(() => themes[settings.theme])
+	const items = computed(() => getBottomNavItems(props.active))
+
+	const navStyle = computed(() => ({
+		backgroundColor: tokens.value.bottomNavBg,
+		boxShadow: tokens.value.shadowSoft
+	}))
+	const activeStyle = computed(() => ({
+		backgroundColor: tokens.value.navActiveBg
+	}))
+	const inactiveStyle = computed(() => ({
+		backgroundColor: 'transparent'
+	}))
+	const activeTextStyle = computed(() => ({
+		color: tokens.value.navActiveText
+	}))
+	const inactiveTextStyle = computed(() => ({
+		color: tokens.value.navInactiveText
+	}))
+
+	function tapItem(id : string) {
+		const action = decideBottomNavAction(id, props.active)
+		if (action.type === 'noop') return
+		if (action.type === 'toast') {
+			uni.showToast({ title: action.title, icon: 'none' })
+			return
+		}
+		uni.reLaunch({ url: action.url })
+	}
+</script>
+
+<style>
+	.bottom-nav {
+		position: fixed;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 50;
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-around;
+		padding: 8px 10px 18px 10px;
+		border-top-left-radius: 34px;
+		border-top-right-radius: 34px;
+	}
+	.nav-item {
+		min-width: 56px;
+		min-height: 54px;
+		border-radius: 28px;
+		align-items: center;
+		justify-content: center;
+		padding: 6px 8px;
+	}
+	.nav-item.active {
+		transform: translateY(-8px);
+	}
+	.nav-icon {
+		font-size: 20px;
+		line-height: 22px;
+	}
+	.nav-label {
+		margin-top: 2px;
+		font-size: 11px;
+		font-weight: bold;
+	}
+</style>
