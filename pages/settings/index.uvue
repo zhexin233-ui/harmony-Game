@@ -1,77 +1,109 @@
 <template>
-	<view class="container">
-		<text class="section-title">主题</text>
-		<view class="row">
-			<view class="pill" :style="cartoonPillStyle" @tap="settings.setTheme('cartoon')">
-				<text :style="{ color: cartoonPillStyle.color }">🎈 Q 版卡通</text>
+	<view class="page" :style="pageStyle">
+		<UiTopBar title="设置" subtitle="主题与设备反馈" rightIcon="⌂" rightUrl="/pages/home/index" />
+		<scroll-view scroll-y class="content">
+			<text class="section-title" :style="sectionTitleStyle">主题</text>
+			<ThemeChoiceCard
+				v-for="card in cards"
+				:key="card.theme"
+				:theme="card.theme"
+				:title="card.title"
+				:subtitle="card.subtitle"
+				:emoji="card.emoji"
+				:tone="card.tone"
+				:active="card.active"
+				@pick="pickTheme"
+			/>
+
+			<text class="section-title" :style="sectionTitleStyle">偏好</text>
+			<view class="setting-row" :style="rowStyle">
+				<view>
+					<text class="setting-name" :style="nameStyle">音效</text>
+					<text class="setting-desc" :style="descStyle">游戏反馈和结果提示音</text>
+				</view>
+				<switch :checked="settings.soundEnabled" @change="toggleSound" />
 			</view>
-			<view class="pill" :style="neonPillStyle" @tap="settings.setTheme('neon')">
-				<text :style="{ color: neonPillStyle.color }">⚡ 霓虹电玩</text>
+			<view class="setting-row" :style="rowStyle">
+				<view>
+					<text class="setting-name" :style="nameStyle">振动</text>
+					<text class="setting-desc" :style="descStyle">关键操作时短振提醒</text>
+				</view>
+				<switch :checked="settings.vibrationEnabled" @change="toggleVibration" />
 			</view>
-		</view>
 
-		<text class="section-title">音效</text>
-		<view class="row between">
-			<text>音效</text>
-			<switch :checked="settings.soundEnabled" @change="toggleSound" />
-		</view>
-
-		<text class="section-title">振动</text>
-		<view class="row between">
-			<text>振动</text>
-			<switch :checked="settings.vibrationEnabled" @change="toggleVibration" />
-		</view>
-
-		<text class="section-title">关于</text>
-		<text class="about">派对小游戏 v0.1.0 · 2026</text>
+			<text class="section-title" :style="sectionTitleStyle">关于</text>
+			<view class="about" :style="rowStyle">
+				<text class="setting-name" :style="nameStyle">派对小游戏</text>
+				<text class="setting-desc" :style="descStyle">版本 v0.1.0 · 2026</text>
+			</view>
+		</scroll-view>
+		<BottomNavBar active="settings" />
 	</view>
 </template>
 
 <script setup lang="uts">
 	import { computed } from 'vue'
+	import UiTopBar from '@/components/UiTopBar.uvue'
+	import BottomNavBar from '@/components/BottomNavBar.uvue'
+	import ThemeChoiceCard from '@/components/ThemeChoiceCard.uvue'
 	import { useSettings } from '@/stores/settings'
-	import { themes } from '@/theme/tokens'
+	import { themes, type Theme } from '@/theme/tokens'
+	import { getThemeCards } from '@/ui/theme-cards'
 
 	const settings = useSettings()
 	const tokens = computed(() => themes[settings.theme])
+	const cards = computed(() => getThemeCards(settings.theme))
 
-	const cartoonPillStyle = computed(() => {
-		const active = settings.theme === 'cartoon'
-		return {
-			backgroundColor: active ? tokens.value.primary : tokens.value.bgEnd,
-			color: active ? '#FFFFFF' : tokens.value.text
-		}
-	})
-	const neonPillStyle = computed(() => {
-		const active = settings.theme === 'neon'
-		return {
-			backgroundColor: active ? tokens.value.primary : tokens.value.bgEnd,
-			color: active ? '#FFFFFF' : tokens.value.text
-		}
-	})
+	const pageStyle = computed(() => ({ backgroundColor: tokens.value.bg }))
+	const sectionTitleStyle = computed(() => ({ color: tokens.value.textMuted }))
+	const rowStyle = computed(() => ({
+		backgroundColor: tokens.value.cardBg,
+		boxShadow: tokens.value.shadowSoft
+	}))
+	const nameStyle = computed(() => ({ color: tokens.value.text }))
+	const descStyle = computed(() => ({ color: tokens.value.textMuted }))
 
+	function pickTheme(theme : Theme) { settings.setTheme(theme) }
 	function toggleSound() { settings.toggleSound() }
 	function toggleVibration() { settings.toggleVibration() }
 </script>
 
 <style>
-	.container { padding: 24px; }
+	.page {
+		flex: 1;
+		min-height: 100%;
+		padding-bottom: 94px;
+	}
+	.content {
+		flex: 1;
+		padding: 20px 20px 0 20px;
+	}
 	.section-title {
+		margin-top: 20px;
+		margin-bottom: 4px;
 		font-size: 14px;
-		color: var(--text-muted, #7A6A87);
-		margin-top: 18px;
-		margin-bottom: 8px;
+		font-weight: 900;
 	}
-	.row { flex-direction: row; }
-	.row.between {
-		justify-content: space-between;
+	.setting-row {
+		margin-top: 12px;
+		border-radius: 24px;
+		padding: 16px;
+		flex-direction: row;
 		align-items: center;
-		padding: 12px 0;
+		justify-content: space-between;
 	}
-	.pill {
-		padding: 10px 18px;
-		border-radius: 18px;
-		margin-right: 8px;
+	.setting-name {
+		font-size: 16px;
+		font-weight: 800;
 	}
-	.about { color: var(--text-muted, #7A6A87); }
+	.setting-desc {
+		margin-top: 4px;
+		font-size: 12px;
+	}
+	.about {
+		margin-top: 12px;
+		border-radius: 24px;
+		padding: 18px;
+		margin-bottom: 20px;
+	}
 </style>

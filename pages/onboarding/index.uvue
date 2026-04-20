@@ -1,41 +1,40 @@
 <template>
-	<view class="container">
-		<text class="title">选一个心情开始</text>
-		<text class="subtitle">稍后可在设置里切换</text>
-		<view class="choices">
-			<view class="card" :style="cartoonCardStyle" @tap="pick('cartoon')">
-				<text class="emoji">🎈</text>
-				<text class="name">Q 版卡通</text>
-				<text class="desc">暖色 · 圆润 · 漫画感</text>
-			</view>
-			<view class="card" :style="neonCardStyle" @tap="pick('neon')">
-				<text class="emoji" :style="neonEmojiStyle">⚡</text>
-				<text class="name" :style="neonNameStyle">霓虹电玩</text>
-				<text class="desc" :style="neonDescStyle">深色 · 柔光 · 赛博感</text>
-			</view>
+	<view class="page" :style="pageStyle">
+		<view class="brand">
+			<text class="brand-title" :style="titleStyle">派对游乐场</text>
+			<text class="brand-subtitle" :style="subtitleStyle">先选一个视觉风格</text>
+		</view>
+
+		<view class="cards">
+			<ThemeChoiceCard
+				v-for="card in cards"
+				:key="card.theme"
+				:theme="card.theme"
+				:title="card.title"
+				:subtitle="card.subtitle"
+				:emoji="card.emoji"
+				:tone="card.tone"
+				:active="card.active"
+				@pick="pick"
+			/>
 		</view>
 	</view>
 </template>
 
 <script setup lang="uts">
 	import { computed } from 'vue'
+	import ThemeChoiceCard from '@/components/ThemeChoiceCard.uvue'
 	import { useSettings } from '@/stores/settings'
 	import { themes, type Theme } from '@/theme/tokens'
+	import { getThemeCards } from '@/ui/theme-cards'
 
 	const settings = useSettings()
+	const tokens = computed(() => themes[settings.theme])
+	const cards = computed(() => getThemeCards(settings.theme))
 
-	const cartoonCardStyle = computed(() => ({
-		backgroundColor: themes.cartoon.primary,
-		borderWidth: '0px'
-	}))
-	const neonCardStyle = computed(() => ({
-		backgroundColor: themes.neon.bg,
-		borderWidth: '1px',
-		borderColor: themes.neon.primary
-	}))
-	const neonEmojiStyle = computed(() => ({ textShadow: themes.neon.emojiShadow }))
-	const neonNameStyle = computed(() => ({ color: themes.neon.primary }))
-	const neonDescStyle = computed(() => ({ color: themes.neon.textMuted }))
+	const pageStyle = computed(() => ({ backgroundColor: tokens.value.bg }))
+	const titleStyle = computed(() => ({ color: tokens.value.primary }))
+	const subtitleStyle = computed(() => ({ color: tokens.value.textMuted }))
 
 	function pick(theme : Theme) {
 		settings.setTheme(theme)
@@ -45,25 +44,27 @@
 </script>
 
 <style>
-	.container { padding: 32px 20px; }
-	.title { font-size: 26px; font-weight: bold; text-align: center; }
-	.subtitle { margin-top: 8px; text-align: center; color: #777777; }
-	.choices { margin-top: 28px; flex-direction: column; }
-	.card {
-		padding: 24px;
-		border-radius: 16px;
+	.page {
+		flex: 1;
+		min-height: 100%;
+		padding: 52px 22px 28px 22px;
+	}
+	.brand {
 		align-items: center;
-		margin-top: 14px;
+		margin-bottom: 26px;
 	}
-	.emoji { font-size: 44px; }
-	.name {
+	.brand-title {
+		font-size: 42px;
+		line-height: 48px;
+		font-weight: 900;
+		text-align: center;
+	}
+	.brand-subtitle {
 		margin-top: 8px;
-		font-size: 20px;
-		color: #FFFFFF;
-		font-weight: bold;
+		font-size: 16px;
+		text-align: center;
 	}
-	.desc {
-		margin-top: 4px;
-		color: rgba(255, 255, 255, 0.85);
+	.cards {
+		flex: 1;
 	}
 </style>
