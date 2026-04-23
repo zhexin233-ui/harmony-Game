@@ -12,7 +12,7 @@
 				:theme="card.theme"
 				:title="card.title"
 				:subtitle="card.subtitle"
-				:emoji="card.emoji"
+				:iconKey="card.iconKey"
 				:tone="card.tone"
 				:active="card.active"
 				@pick="pick"

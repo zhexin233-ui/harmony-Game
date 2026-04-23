@@ -1,11 +1,13 @@
 export type TopLevelPage = 'home' | 'games' | 'punishment' | 'settings'
 
-export type BottomNavItemId = 'home' | 'games' | 'punishment' | 'social' | 'settings'
+import type { IconKey } from '@/ui/icons'
+
+export type BottomNavItemId = 'home' | 'punishment' | 'settings'
 
 export type BottomNavItem = {
   id: BottomNavItemId
   label: string
-  icon: string
+  iconKey: IconKey
   page?: TopLevelPage
   route?: string
   placeholderTitle?: string
@@ -23,14 +25,12 @@ export type BottomNavAction =
 export const UNMAPPED_ENTRY_TITLE = '功能建设中，稍后开放'
 
 export const BOTTOM_NAV_ITEMS: BottomNavItem[] = [
-  { id: 'home', label: '首页', icon: '⌂', page: 'home', route: '/pages/home/index' },
-  { id: 'games', label: '游戏', icon: '🎮', page: 'games', route: '/pages/lobby/games' },
-  { id: 'punishment', label: '惩罚', icon: '⚡', page: 'punishment', route: '/pages/punishment/index' },
-  { id: 'social', label: '社交', icon: '👥', placeholderTitle: UNMAPPED_ENTRY_TITLE },
-  { id: 'settings', label: '设置', icon: '⚙', page: 'settings', route: '/pages/settings/index' }
+  { id: 'home', label: '首页', iconKey: 'nav-home', page: 'home', route: '/pages/home/index' },
+  { id: 'punishment', label: '惩罚', iconKey: 'nav-punishment', page: 'punishment', route: '/pages/punishment/index' },
+  { id: 'settings', label: '设置', iconKey: 'nav-settings', page: 'settings', route: '/pages/settings/index' }
 ]
 
-export function getBottomNavItems(current: TopLevelPage): BottomNavRenderItem[] {
+export function getBottomNavItems(current?: TopLevelPage): BottomNavRenderItem[] {
   return BOTTOM_NAV_ITEMS.map((item) => ({
     ...item,
     active: item.page === current

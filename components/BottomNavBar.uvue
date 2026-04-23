@@ -8,7 +8,7 @@
 			:style="item.active ? activeStyle : inactiveStyle"
 			@tap="tapItem(item.id)"
 		>
-			<text class="nav-icon" :style="item.active ? activeTextStyle : inactiveTextStyle">{{ item.icon }}</text>
+			<UiIcon class="nav-icon" :name="item.iconKey" :size="22" :opacity="item.active ? 1 : 0.68" />
 			<text class="nav-label" :style="item.active ? activeTextStyle : inactiveTextStyle">{{ item.label }}</text>
 		</view>
 	</view>
@@ -16,6 +16,7 @@
 
 <script setup lang="uts">
 	import { computed } from 'vue'
+	import UiIcon from '@/components/UiIcon.uvue'
 	import { useSettings } from '@/stores/settings'
 	import { themes } from '@/theme/tokens'
 	import { decideBottomNavAction, getBottomNavItems, type TopLevelPage } from '@/ui/navigation'
@@ -82,11 +83,9 @@
 		transform: translateY(-8px);
 	}
 	.nav-icon {
-		font-size: 20px;
-		line-height: 22px;
+		margin-bottom: 2px;
 	}
 	.nav-label {
-		margin-top: 2px;
 		font-size: 11px;
 		font-weight: bold;
 	}

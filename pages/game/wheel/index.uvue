@@ -1,6 +1,6 @@
 <template>
 	<view class="container" :style="containerStyle">
-		<text class="big" :style="emojiShadowStyle">🎯</text>
+		<UiIcon name="target" :size="72" />
 		<text class="title">指尖大轮盘</text>
 
 		<view
@@ -11,16 +11,18 @@
 			@touchend="onTouchEnd"
 			@touchcancel="onTouchEnd"
 		>
-			<text class="wheel-emoji" :class="{ 'anim-spin': state === 'spinning' }" :style="emojiShadowStyle">🎡</text>
+			<view class="wheel-icon" :class="{ 'anim-spin': state === 'spinning' }">
+				<UiIcon name="wheel-disc" :size="112" />
+			</view>
 			<view v-if="state === 'collecting'" class="collect-hint">
 				<text class="collect-line" :style="collectStyle">请 {{ session.playerCount }} 根手指同时按在圆盘里</text>
 				<text class="collect-line" :style="collectStyle">当前：{{ snap?.fingerIds?.length ?? 0 }} / {{ session.playerCount }}</text>
 			</view>
 			<text v-else-if="state === 'spinning'" class="spin-hint" :style="spinHintStyle">
-				🔄 旋转中...
+				旋转中...
 			</text>
 			<text v-else-if="state === 'selected'" class="result-hint" :style="resultHintStyle">
-				🎯 选中了 {{ session.displayNameOf(snap?.result?.loser ?? 0) }}！
+				选中了 {{ session.displayNameOf(snap?.result?.loser ?? 0) }}！
 			</text>
 		</view>
 
@@ -46,6 +48,7 @@
 	import { ref, computed } from 'vue'
 	import AppButton from '@/components/AppButton.uvue'
 	import GamePausedOverlay from '@/components/GamePausedOverlay.uvue'
+	import UiIcon from '@/components/UiIcon.uvue'
 	import { useSession } from '@/stores/session'
 	import { useSettings } from '@/stores/settings'
 	import { themes } from '@/theme/tokens'
@@ -69,7 +72,6 @@
 
 	const containerStyle = computed(() => ({ backgroundColor: tokens.value.bg }))
 	const wheelBgStyle = computed(() => ({ backgroundColor: tokens.value.bgEnd }))
-	const emojiShadowStyle = computed(() => ({ textShadow: tokens.value.emojiShadow }))
 	const spinHintStyle = computed(() => ({ color: tokens.value.primary }))
 	const resultHintStyle = computed(() => ({ color: tokens.value.primary }))
 	const collectStyle = computed(() => ({ color: tokens.value.textMuted }))
@@ -203,7 +205,12 @@
 		align-items: center;
 		justify-content: center;
 	}
-	.wheel-emoji { font-size: 100px; }
+	.wheel-icon {
+		width: 112px;
+		height: 112px;
+		align-items: center;
+		justify-content: center;
+	}
 	.collect-hint {
 		margin-top: 12px;
 		align-items: center;

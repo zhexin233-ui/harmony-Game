@@ -1,4 +1,5 @@
 import type { GameId } from '@/stores/session'
+import type { IconKey } from '@/ui/icons'
 
 export type GameCategory = 'luck' | 'skill'
 export type GameFilter = 'all' | GameCategory
@@ -7,7 +8,7 @@ export type GameMeta = {
   id: GameId
   name: string
   summary: string
-  emoji: string
+  fallbackIconKey: IconKey
   min: number
   max: number
   category: GameCategory
@@ -17,25 +18,25 @@ export type GameMeta = {
 export type GameGroup = {
   category: GameCategory
   title: string
-  icon: string
+  iconKey: IconKey
   games: GameMeta[]
 }
 
 export type CoverDisplay =
   | { mode: 'image'; value: string }
-  | { mode: 'emoji'; value: string }
+  | { mode: 'icon'; value: IconKey }
 
 export const GAME_GROUPS: GameGroup[] = [
   {
     category: 'luck',
     title: '运气派',
-    icon: '🎲',
+    iconKey: 'group-luck',
     games: [
       {
         id: 'bomb',
         name: '定时炸弹',
         summary: '倒计时传递，爆炸者受罚',
-        emoji: '💣',
+        fallbackIconKey: 'game-bomb',
         min: 2,
         max: 8,
         category: 'luck',
@@ -45,7 +46,7 @@ export const GAME_GROUPS: GameGroup[] = [
         id: 'crocodile',
         name: '鳄鱼拔牙',
         summary: '试试手气，别被咬到',
-        emoji: '🐊',
+        fallbackIconKey: 'game-crocodile',
         min: 2,
         max: 8,
         category: 'luck',
@@ -55,7 +56,7 @@ export const GAME_GROUPS: GameGroup[] = [
         id: 'wheel',
         name: '指尖大轮盘',
         summary: '手指上阵，轮盘决定输赢',
-        emoji: '🎯',
+        fallbackIconKey: 'game-wheel',
         min: 2,
         max: 5,
         category: 'luck',
@@ -66,13 +67,13 @@ export const GAME_GROUPS: GameGroup[] = [
   {
     category: 'skill',
     title: '实力派',
-    icon: '⚡',
+    iconKey: 'group-skill',
     games: [
       {
         id: 'horse-race',
         name: '摇一摇赛马',
         summary: '比拼手速和节奏',
-        emoji: '🐎',
+        fallbackIconKey: 'game-horse-race',
         min: 2,
         max: 8,
         category: 'skill',
@@ -82,7 +83,7 @@ export const GAME_GROUPS: GameGroup[] = [
         id: 'reaction',
         name: '同屏反应大比拼',
         summary: '看谁最快点中目标',
-        emoji: '👆',
+        fallbackIconKey: 'game-reaction',
         min: 2,
         max: 5,
         category: 'skill',
@@ -122,7 +123,7 @@ export function getGameRoute(id: GameId): string {
 
 export function resolveGameCover(game: GameMeta, failedIds: Set<GameId>): CoverDisplay {
   if (failedIds.has(game.id) || game.cover.length === 0) {
-    return { mode: 'emoji', value: game.emoji }
+    return { mode: 'icon', value: game.fallbackIconKey }
   }
   return { mode: 'image', value: game.cover }
 }

@@ -1,6 +1,6 @@
 <template>
 	<view class="page" :style="pageStyle">
-		<UiTopBar title="选择人数" subtitle="2 到 8 人都可以玩" rightIcon="⌂" rightUrl="/pages/home/index" />
+		<UiTopBar title="选择人数" subtitle="2 到 8 人都可以玩" rightIcon="nav-home" rightUrl="/pages/home/index" />
 		<view class="decor decor-left" :style="decorPrimaryStyle"></view>
 		<view class="decor decor-right" :style="decorSecondaryStyle"></view>
 
@@ -13,14 +13,14 @@
 			<view class="selector-card" :style="cardStyle">
 				<view class="selector-row">
 					<view class="circle-btn" :style="minusStyle" @tap="minus">
-						<text class="circle-text" :style="minusTextStyle">−</text>
+						<UiIcon name="minus" :size="28" />
 					</view>
 					<view class="number-wrap">
 						<view class="number-glow" :style="glowStyle"></view>
 						<text class="number" :style="numberStyle">{{ picked }}</text>
 					</view>
 					<view class="circle-btn" :style="plusStyle" @tap="plus">
-						<text class="circle-text" :style="plusTextStyle">＋</text>
+						<UiIcon name="add" :size="28" />
 					</view>
 				</view>
 				<view class="range-pill" :style="rangeStyle">
@@ -39,6 +39,7 @@
 <script setup lang="uts">
 	import { computed, ref } from 'vue'
 	import AppButton from '@/components/AppButton.uvue'
+	import UiIcon from '@/components/UiIcon.uvue'
 	import UiTopBar from '@/components/UiTopBar.uvue'
 	import { useSession } from '@/stores/session'
 	import { useSettings } from '@/stores/settings'
@@ -59,8 +60,6 @@
 	}))
 	const minusStyle = computed(() => ({ backgroundColor: tokens.value.surfaceHighest }))
 	const plusStyle = computed(() => ({ backgroundColor: tokens.value.primary }))
-	const minusTextStyle = computed(() => ({ color: tokens.value.text }))
-	const plusTextStyle = computed(() => ({ color: tokens.value.onPrimary }))
 	const numberStyle = computed(() => ({ color: tokens.value.primary }))
 	const glowStyle = computed(() => ({ backgroundColor: tokens.value.decorPrimary }))
 	const rangeStyle = computed(() => ({ backgroundColor: tokens.value.surfaceHigh }))
@@ -130,10 +129,6 @@
 		border-radius: 32px;
 		align-items: center;
 		justify-content: center;
-	}
-	.circle-text {
-		font-size: 31px;
-		font-weight: 900;
 	}
 	.number-wrap {
 		position: relative;

@@ -1,6 +1,6 @@
 <template>
 	<view class="page" :style="pageStyle">
-		<UiTopBar title="派对游乐场" subtitle="今晚从这里开局" :showBack="false" rightIcon="☺" rightUrl="/pages/settings/index" />
+		<UiTopBar title="派对游乐场" subtitle="今晚从这里开局" :showBack="false" rightIcon="nav-settings" rightUrl="/pages/settings/index" />
 		<view class="decor decor-left" :style="decorPrimaryStyle"></view>
 		<view class="decor decor-right" :style="decorSecondaryStyle"></view>
 
@@ -15,29 +15,35 @@
 					<text class="entry-title primary-text">开始玩</text>
 					<text class="entry-desc primary-text">进入人数选择</text>
 				</view>
-				<text class="entry-icon primary-text">▶</text>
+				<view class="entry-icon-wrap">
+					<UiIcon name="play" :size="48" />
+				</view>
 			</view>
 
 			<view class="entry entry-shift-right" :style="cardHighStyle" @tap="goPunishment">
 				<view class="round-icon danger-icon" :style="dangerIconStyle">
-					<text class="round-icon-text">⚡</text>
+					<UiIcon name="nav-punishment" :size="28" />
 				</view>
 				<view class="entry-copy">
 					<text class="entry-title" :style="entryTitleStyle">惩罚列表</text>
 					<text class="entry-desc" :style="entryDescStyle">管理输家挑战</text>
 				</view>
-				<text class="chevron" :style="entryDescStyle">›</text>
+				<view class="chevron">
+					<UiIcon name="arrow-right" :size="24" :opacity="0.78" />
+				</view>
 			</view>
 
 			<view class="entry entry-shift-left" :style="cardAltStyle" @tap="goSettings">
 				<view class="round-icon" :style="softIconStyle">
-					<text class="round-icon-text">⚙</text>
+					<UiIcon name="nav-settings" :size="28" />
 				</view>
 				<view class="entry-copy">
 					<text class="entry-title" :style="entryTitleStyle">设置</text>
 					<text class="entry-desc" :style="entryDescStyle">主题、音效、振动</text>
 				</view>
-				<text class="chevron" :style="entryDescStyle">›</text>
+				<view class="chevron">
+					<UiIcon name="arrow-right" :size="24" :opacity="0.78" />
+				</view>
 			</view>
 		</view>
 
@@ -47,6 +53,7 @@
 
 <script setup lang="uts">
 	import { computed } from 'vue'
+	import UiIcon from '@/components/UiIcon.uvue'
 	import UiTopBar from '@/components/UiTopBar.uvue'
 	import BottomNavBar from '@/components/BottomNavBar.uvue'
 	import { useSettings } from '@/stores/settings'
@@ -138,9 +145,11 @@
 		margin-top: 4px;
 		font-size: 13px;
 	}
-	.entry-icon {
-		font-size: 42px;
-		font-weight: bold;
+	.entry-icon-wrap {
+		width: 56px;
+		height: 56px;
+		align-items: center;
+		justify-content: center;
 	}
 	.entry-copy {
 		flex: 1;
@@ -153,16 +162,11 @@
 		align-items: center;
 		justify-content: center;
 	}
-	.round-icon-text {
-		font-size: 28px;
-		color: #ffffff;
-	}
-	.danger-icon .round-icon-text {
-		color: #ffffff;
-	}
 	.chevron {
-		font-size: 28px;
-		font-weight: bold;
+		width: 28px;
+		height: 28px;
+		align-items: center;
+		justify-content: center;
 	}
 	.decor {
 		position: absolute;

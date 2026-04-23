@@ -1,16 +1,19 @@
 <template>
 	<view class="container" :style="containerStyle">
-		<text class="big anim-pulse" :style="bigEmojiStyle">💣</text>
+		<UiIcon name="game-bomb" :size="120" />
 		<text class="title">定时炸弹</text>
 
 		<view v-if="state === 'ticking'" class="ticking">
 			<text class="hint" :style="hintStyle">传递手机 · 点引线扣 1 秒</text>
-			<AppButton label="✂️ 剪引线" variant="primary" @tap="onCutFuse" />
+			<AppButton label="剪引线" variant="primary" @tap="onCutFuse" />
 			<text class="cuts" :style="hintStyle">已剪 {{ snap?.fuseCuts ?? 0 }} 次</text>
 		</view>
 
 		<view v-else-if="state === 'exploded'" class="exploded">
-			<text class="boom" :style="boomStyle">💥 爆炸了！</text>
+			<view class="boom-row">
+				<UiIcon name="explosion" :size="34" />
+				<text class="boom" :style="boomStyle">爆炸了！</text>
+			</view>
 			<text class="hint" :style="hintStyle">手里拿着手机的人点自己</text>
 			<view class="who-grid">
 				<view v-for="i in session.playerCount" :key="i" class="who" :style="whoBgStyle" @tap="claimLoser(i - 1)">
@@ -35,6 +38,7 @@
 	import { ref, computed } from 'vue'
 	import AppButton from '@/components/AppButton.uvue'
 	import GamePausedOverlay from '@/components/GamePausedOverlay.uvue'
+	import UiIcon from '@/components/UiIcon.uvue'
 	import { useSession } from '@/stores/session'
 	import { useSettings } from '@/stores/settings'
 	import { themes } from '@/theme/tokens'
@@ -72,7 +76,6 @@
 				: tokens.value.bg
 		return { backgroundColor: bg }
 	})
-	const bigEmojiStyle = computed(() => ({ textShadow: tokens.value.emojiShadow }))
 	const boomStyle = computed(() => ({ color: tokens.value.danger }))
 	const whoBgStyle = computed(() => ({ backgroundColor: tokens.value.bgEnd }))
 	const hintStyle = computed(() => ({ color: tokens.value.textMuted }))
@@ -188,7 +191,6 @@
 		align-items: center;
 		justify-content: center;
 	}
-	.big { font-size: 120px; }
 	.title {
 		font-size: 22px;
 		font-weight: bold;
@@ -213,6 +215,11 @@
 	.boom {
 		font-size: 28px;
 		font-weight: bold;
+		margin-left: 10px;
+	}
+	.boom-row {
+		flex-direction: row;
+		align-items: center;
 		margin: 16px 0;
 	}
 	.who-grid {

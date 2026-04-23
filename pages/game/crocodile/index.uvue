@@ -1,6 +1,6 @@
 <template>
 	<view class="container" :class="{ 'anim-shake': state === 'trapTriggered' }" :style="containerStyle">
-		<text class="big" :style="bigEmojiStyle">🐊</text>
+		<UiIcon name="game-crocodile" :size="108" />
 		<text class="title">鳄鱼拔牙</text>
 
 		<view v-if="state === 'ready'" class="ready">
@@ -21,7 +21,7 @@
 					:style="toothStyle"
 					@tap="onTapTooth(i - 1)"
 				>
-					<text class="tooth-emoji">{{ isPressed(i - 1) ? '⬜' : '🦷' }}</text>
+					<UiIcon name="tooth" :size="32" :opacity="isPressed(i - 1) ? 0.28 : 1" />
 				</view>
 			</view>
 		</view>
@@ -47,6 +47,7 @@
 	import { ref, computed } from 'vue'
 	import AppButton from '@/components/AppButton.uvue'
 	import GamePausedOverlay from '@/components/GamePausedOverlay.uvue'
+	import UiIcon from '@/components/UiIcon.uvue'
 	import { useSession } from '@/stores/session'
 	import { useSettings } from '@/stores/settings'
 	import { themes } from '@/theme/tokens'
@@ -68,7 +69,6 @@
 	const containerStyle = computed(() => ({
 		backgroundColor: state.value === 'trapTriggered' ? tokens.value.urgent : tokens.value.bg
 	}))
-	const bigEmojiStyle = computed(() => ({ textShadow: tokens.value.emojiShadow }))
 	const currentStyle = computed(() => ({ color: tokens.value.primary }))
 	const toothStyle = computed(() => ({ backgroundColor: tokens.value.bgEnd }))
 	const biteTextStyle = computed(() => ({ color: tokens.value.danger }))
@@ -152,10 +152,6 @@
 		min-height: 100vh;
 		align-items: center;
 	}
-	.big {
-		font-size: 100px;
-		margin-top: 16px;
-	}
 	.title {
 		font-size: 22px;
 		font-weight: bold;
@@ -190,7 +186,6 @@
 		justify-content: center;
 	}
 	.tooth.pressed { opacity: 0.35; }
-	.tooth-emoji { font-size: 32px; }
 	.hint {
 		margin: 12px 0;
 	}

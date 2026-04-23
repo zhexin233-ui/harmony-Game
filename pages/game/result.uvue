@@ -8,7 +8,7 @@
 			<text class="punishment">{{ punishment }}</text>
 		</view>
 		<view v-else class="empty anim-fade-in" :style="emptyStyle">
-			<text class="empty-emoji" :style="emojiShadowStyle">📭</text>
+			<UiIcon name="mail-empty" :size="48" />
 			<text class="empty-title">惩罚库为空</text>
 			<text class="empty-desc" :style="mutedStyle">启用至少一条规则，才能抽惩罚。</text>
 			<AppButton label="去管理惩罚规则" variant="primary" @tap="toPunishment" />
@@ -23,6 +23,7 @@
 <script setup lang="uts">
 	import { computed } from 'vue'
 	import AppButton from '@/components/AppButton.uvue'
+	import UiIcon from '@/components/UiIcon.uvue'
 	import { useSession, type GameId } from '@/stores/session'
 	import { usePunishment } from '@/stores/punishment'
 	import { useSettings } from '@/stores/settings'
@@ -37,7 +38,6 @@
 	const cardStyle = computed(() => ({ backgroundColor: tokens.value.bgEnd }))
 	const emptyStyle = computed(() => ({ backgroundColor: tokens.value.bgEnd }))
 	const mutedStyle = computed(() => ({ color: tokens.value.textMuted }))
-	const emojiShadowStyle = computed(() => ({ textShadow: tokens.value.emojiShadow }))
 
 	// 入口只抽一次；写入 session.pickedPunishmentText 便于需要时回显。
 	const picked = punishmentStore.pick()
@@ -107,7 +107,6 @@
 		border-radius: 16px;
 		align-items: center;
 	}
-	.empty-emoji { font-size: 48px; }
 	.empty-title {
 		font-size: 18px;
 		font-weight: bold;

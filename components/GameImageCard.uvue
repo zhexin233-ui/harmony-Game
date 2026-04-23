@@ -4,11 +4,11 @@
 			<image
 				v-if="coverMode === 'image'"
 				class="cover-image"
-				:src="coverValue"
+				:src="cover"
 				mode="aspectFit"
 				@error="onImageError"
 			/>
-			<text v-else class="cover-emoji" :style="emojiStyle">{{ coverValue }}</text>
+			<UiIcon v-else class="cover-icon" :name="fallbackIconKey" :size="56" :opacity="disabled ? 0.56 : 1" />
 			<view class="players-pill" :style="pillStyle">
 				<text class="players-text" :style="pillTextStyle">{{ min }}-{{ max }} 人</text>
 			</view>
@@ -20,14 +20,16 @@
 
 <script setup lang="uts">
 	import { computed, ref } from 'vue'
+	import UiIcon from '@/components/UiIcon.uvue'
 	import { useSettings } from '@/stores/settings'
 	import { themes } from '@/theme/tokens'
+	import type { IconKey } from '@/ui/icons'
 
 	const props = defineProps<{
 		id : string
 		name : string
 		summary : string
-		emoji : string
+		fallbackIconKey : IconKey
 		cover : string
 		min : number
 		max : number
@@ -44,8 +46,7 @@
 	const tokens = computed(() => themes[settings.theme])
 	const imageFailed = ref(false)
 
-	const coverMode = computed(() => imageFailed.value || props.cover.length === 0 ? 'emoji' : 'image')
-	const coverValue = computed(() => coverMode.value === 'image' ? props.cover : props.emoji)
+	const coverMode = computed(() => imageFailed.value || props.cover.length === 0 ? 'icon' : 'image')
 
 	const cardStyle = computed(() => ({
 		backgroundColor: tokens.value.cardBg,
@@ -54,9 +55,6 @@
 	}))
 	const coverStyle = computed(() => ({
 		backgroundColor: props.disabled ? tokens.value.disabledBg : tokens.value.imageCardBg
-	}))
-	const emojiStyle = computed(() => ({
-		textShadow: tokens.value.emojiShadow
 	}))
 	const pillStyle = computed(() => ({
 		backgroundColor: tokens.value.success
@@ -103,9 +101,6 @@
 	.cover-image {
 		width: 100%;
 		height: 100%;
-	}
-	.cover-emoji {
-		font-size: 48px;
 	}
 	.players-pill {
 		position: absolute;

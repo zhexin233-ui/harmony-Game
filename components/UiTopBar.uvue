@@ -1,28 +1,31 @@
 <template>
 	<view class="ui-top-bar" :style="barStyle">
 		<view class="top-icon" :style="iconStyle" @tap="onBack">
-			<text class="top-icon-text" :style="iconTextStyle">{{ showBack ? '‹' : '🎲' }}</text>
+			<UiIcon :name="leftIcon" :size="22" />
 		</view>
 		<view class="top-title-wrap">
 			<text class="top-title" :style="titleStyle">{{ title }}</text>
 			<text v-if="subtitle" class="top-subtitle" :style="subtitleStyle">{{ subtitle }}</text>
 		</view>
 		<view class="top-icon" :style="iconStyle" @tap="onRight">
-			<text class="top-icon-text" :style="iconTextStyle">{{ rightIcon }}</text>
+			<UiIcon :name="rightIcon" :size="22" />
 		</view>
 	</view>
 </template>
 
 <script setup lang="uts">
 	import { computed } from 'vue'
+	import UiIcon from '@/components/UiIcon.uvue'
 	import { useSettings } from '@/stores/settings'
 	import { themes } from '@/theme/tokens'
+	import type { IconKey } from '@/ui/icons'
+	import { getTopBarPaddingStyle } from '@/ui/top-bar'
 
 	const props = defineProps<{
 		title : string
 		subtitle ?: string
 		showBack ?: boolean
-		rightIcon ?: string
+		rightIcon ?: IconKey
 		rightUrl ?: string
 	}>()
 
@@ -34,17 +37,20 @@
 	const settings = useSettings()
 	const tokens = computed(() => themes[settings.theme])
 	const showBack = computed(() => props.showBack ?? true)
-	const rightIcon = computed(() => props.rightIcon ?? '⚙')
+	const leftIcon = computed(() => showBack.value ? 'back' as IconKey : 'logo-dice' as IconKey)
+	const rightIcon = computed(() => props.rightIcon ?? 'nav-settings')
+	const topBarPaddingStyle = getTopBarPaddingStyle()
 
 	const barStyle = computed(() => ({
 		backgroundColor: tokens.value.topBarBg,
-		boxShadow: tokens.value.shadowSoft
+		boxShadow: tokens.value.shadowSoft,
+		paddingTop: topBarPaddingStyle.paddingTop,
+		paddingRight: topBarPaddingStyle.paddingRight,
+		paddingBottom: topBarPaddingStyle.paddingBottom,
+		paddingLeft: topBarPaddingStyle.paddingLeft
 	}))
 	const iconStyle = computed(() => ({
 		backgroundColor: tokens.value.surfaceHigh
-	}))
-	const iconTextStyle = computed(() => ({
-		color: tokens.value.primary
 	}))
 	const titleStyle = computed(() => ({
 		color: tokens.value.text
@@ -73,7 +79,6 @@
 		flex-direction: row;
 		align-items: center;
 		justify-content: space-between;
-		padding: 14px 20px;
 		border-bottom-left-radius: 26px;
 		border-bottom-right-radius: 26px;
 	}
@@ -83,10 +88,6 @@
 		border-radius: 21px;
 		align-items: center;
 		justify-content: center;
-	}
-	.top-icon-text {
-		font-size: 22px;
-		font-weight: bold;
 	}
 	.top-title-wrap {
 		flex: 1;

@@ -1,9 +1,9 @@
 <template>
 	<view class="page" :style="pageStyle">
-		<UiTopBar title="惩罚列表" :subtitle="store.rules.length + ' 条规则'" rightIcon="⌂" rightUrl="/pages/home/index" />
+		<UiTopBar title="惩罚列表" :subtitle="store.rules.length + ' 条规则'" rightIcon="nav-home" rightUrl="/pages/home/index" />
 		<scroll-view scroll-y class="content">
 			<view class="hero-card" :style="heroCardStyle" @tap="goAdd">
-				<text class="hero-icon">＋</text>
+				<UiIcon name="add" :size="44" />
 				<text class="hero-title">新增惩罚</text>
 				<text class="hero-desc">给输家加一条新的挑战</text>
 			</view>
@@ -16,7 +16,7 @@
 			</view>
 
 			<view v-if="store.rules.length === 0" class="empty-card" :style="cardStyle">
-				<text class="empty-emoji">📭</text>
+				<UiIcon name="mail-empty" :size="42" />
 				<text class="empty-title" :style="titleStyle">还没有惩罚</text>
 				<text class="empty-desc" :style="descStyle">先点上方卡片新增一条规则。</text>
 			</view>
@@ -42,6 +42,7 @@
 
 <script setup lang="uts">
 	import { computed } from 'vue'
+	import UiIcon from '@/components/UiIcon.uvue'
 	import UiTopBar from '@/components/UiTopBar.uvue'
 	import BottomNavBar from '@/components/BottomNavBar.uvue'
 	import { usePunishment, type PunishmentRule } from '@/stores/punishment'
@@ -103,11 +104,6 @@
 		align-items: center;
 		overflow: hidden;
 	}
-	.hero-icon {
-		font-size: 44px;
-		color: #ffffff;
-		font-weight: 900;
-	}
 	.hero-title {
 		margin-top: 6px;
 		font-size: 24px;
@@ -142,9 +138,6 @@
 		border-radius: 24px;
 		padding: 28px;
 		align-items: center;
-	}
-	.empty-emoji {
-		font-size: 42px;
 	}
 	.empty-title {
 		margin-top: 10px;

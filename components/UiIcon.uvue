@@ -1,0 +1,29 @@
+<template>
+	<image class="ui-icon" :src="src" :mode="iconMode" :style="imageStyle" />
+</template>
+
+<script setup lang="uts">
+	import { computed } from 'vue'
+	import { getIconPath, type IconKey } from '@/ui/icons'
+
+	const props = defineProps<{
+		name : IconKey
+		size ?: number
+		opacity ?: number
+		mode ?: string
+	}>()
+
+	const src = computed(() => getIconPath(props.name))
+	const iconMode = computed(() => props.mode ?? 'aspectFit')
+	const imageStyle = computed(() => ({
+		width: (props.size ?? 24) + 'px',
+		height: (props.size ?? 24) + 'px',
+		opacity: props.opacity ?? 1
+	}))
+</script>
+
+<style>
+	.ui-icon {
+		display: flex;
+	}
+</style>

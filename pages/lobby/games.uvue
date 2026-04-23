@@ -1,6 +1,6 @@
 <template>
 	<view class="page" :style="pageStyle">
-		<UiTopBar title="选择游戏" :subtitle="'当前 ' + session.playerCount + ' 人'" rightIcon="⌂" rightUrl="/pages/home/index" />
+		<UiTopBar title="选择游戏" :subtitle="'当前 ' + session.playerCount + ' 人'" rightIcon="nav-home" rightUrl="/pages/home/index" />
 
 		<view class="content">
 			<view class="header-row">
@@ -21,7 +21,7 @@
 			<scroll-view scroll-y class="scroll">
 				<view v-for="group in groups" :key="group.category" class="group">
 					<view class="group-title-row">
-						<text class="group-icon">{{ group.icon }}</text>
+						<UiIcon class="group-icon" :name="group.iconKey" :size="24" />
 						<text class="group-title" :style="groupTitleStyle">{{ group.title }}</text>
 					</view>
 					<view class="game-grid">
@@ -31,7 +31,7 @@
 							:id="game.id"
 							:name="game.name"
 							:summary="game.summary"
-							:emoji="game.emoji"
+							:fallbackIconKey="game.fallbackIconKey"
 							:cover="game.cover"
 							:min="game.min"
 							:max="game.max"
@@ -50,6 +50,7 @@
 
 <script setup lang="uts">
 	import { computed, ref } from 'vue'
+	import UiIcon from '@/components/UiIcon.uvue'
 	import UiTopBar from '@/components/UiTopBar.uvue'
 	import BottomNavBar from '@/components/BottomNavBar.uvue'
 	import GameImageCard from '@/components/GameImageCard.uvue'
@@ -143,7 +144,6 @@
 		margin-bottom: 14px;
 	}
 	.group-icon {
-		font-size: 22px;
 		margin-right: 8px;
 	}
 	.group-title {

@@ -5,6 +5,7 @@ describe('theme cards', () => {
   it('返回两张中文主题卡片', () => {
     expect(getThemeCards('cartoon').map((card) => card.title)).toEqual(['Q 版卡通', '霓虹电玩'])
     expect(getThemeCards('cartoon').map((card) => card.theme)).toEqual(['cartoon', 'neon'])
+    expect(getThemeCards('cartoon').map((card) => card.iconKey)).toEqual(['theme-cartoon', 'theme-neon'])
   })
 
   it('根据当前主题标记选中态', () => {

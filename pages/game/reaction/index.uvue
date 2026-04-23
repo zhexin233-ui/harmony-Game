@@ -7,7 +7,10 @@
 		@touchend="onTouchEnd"
 		@touchcancel="onTouchEnd"
 	>
-		<text class="title" :style="bigHintStyle">👆 同屏反应大比拼</text>
+		<view class="title-row">
+			<UiIcon name="game-reaction" :size="32" />
+			<text class="title" :style="bigHintStyle">同屏反应大比拼</text>
+		</view>
 
 		<view v-if="state === 'collecting'" class="hint-box">
 			<text class="hint-big" :style="bigHintStyle">
@@ -19,12 +22,18 @@
 		</view>
 
 		<view v-else-if="state === 'armed'" class="hint-box">
-			<text class="hint-big" :style="bigHintStyle">👀 所有人保持按住，等待信号…</text>
+			<view class="hint-row">
+				<UiIcon name="eye" :size="26" />
+				<text class="hint-big" :style="bigHintStyle">所有人保持按住，等待信号…</text>
+			</view>
 			<text class="hint-small" :style="smallHintStyle">抢先松手 = 立即输</text>
 		</view>
 
 		<view v-else-if="state === 'signal'" class="hint-box">
-			<text class="signal-big" :style="signalBigStyle">⚡ 现在！松手！</text>
+			<view class="hint-row">
+				<UiIcon name="signal" :size="30" />
+				<text class="signal-big" :style="signalBigStyle">现在！松手！</text>
+			</view>
 			<text class="hint-small" :style="smallHintStyle">最后松手的人输</text>
 		</view>
 
@@ -51,6 +60,7 @@
 	import { ref, computed } from 'vue'
 	import AppButton from '@/components/AppButton.uvue'
 	import GamePausedOverlay from '@/components/GamePausedOverlay.uvue'
+	import UiIcon from '@/components/UiIcon.uvue'
 	import { useSession } from '@/stores/session'
 	import { useSettings } from '@/stores/settings'
 	import { themes } from '@/theme/tokens'
@@ -213,16 +223,26 @@
 		align-items: center;
 		justify-content: center;
 	}
+	.title-row {
+		flex-direction: row;
+		align-items: center;
+		margin-bottom: 24px;
+	}
 	.title {
 		font-size: 22px;
 		font-weight: bold;
-		margin-bottom: 24px;
+		margin-left: 10px;
 	}
 	.hint-box { align-items: center; }
+	.hint-row {
+		flex-direction: row;
+		align-items: center;
+	}
 	.hint-big {
 		font-size: 20px;
 		font-weight: bold;
 		text-align: center;
+		margin-left: 8px;
 	}
 	.hint-small {
 		margin-top: 8px;

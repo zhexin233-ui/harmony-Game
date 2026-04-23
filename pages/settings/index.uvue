@@ -1,6 +1,6 @@
 <template>
 	<view class="page" :style="pageStyle">
-		<UiTopBar title="设置" subtitle="主题与设备反馈" rightIcon="⌂" rightUrl="/pages/home/index" />
+		<UiTopBar title="设置" subtitle="主题与设备反馈" rightIcon="nav-home" rightUrl="/pages/home/index" />
 		<scroll-view scroll-y class="content">
 			<text class="section-title" :style="sectionTitleStyle">主题</text>
 			<ThemeChoiceCard
@@ -9,7 +9,7 @@
 				:theme="card.theme"
 				:title="card.title"
 				:subtitle="card.subtitle"
-				:emoji="card.emoji"
+				:iconKey="card.iconKey"
 				:tone="card.tone"
 				:active="card.active"
 				@pick="pickTheme"

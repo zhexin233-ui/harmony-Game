@@ -1,6 +1,6 @@
 <template>
 	<view class="container" :style="containerStyle">
-		<text class="big" :style="bigEmojiStyle">🐎</text>
+		<UiIcon name="game-horse-race" :size="104" />
 		<text class="title">摇一摇赛马</text>
 
 		<view v-if="state === 'ready'" class="ready">
@@ -19,8 +19,14 @@
 		</view>
 
 		<view v-else-if="state === 'result'" class="result">
-			<text class="trophy" :style="trophyStyle">🏆 {{ session.displayNameOf(snap?.result?.winner ?? 0) }} 赢了！</text>
-			<text class="skull" :style="skullStyle">💩 {{ session.displayNameOf(snap?.result?.loser ?? 0) }} 输了</text>
+			<view class="result-row">
+				<UiIcon name="trophy" :size="28" />
+				<text class="trophy" :style="trophyStyle">{{ session.displayNameOf(snap?.result?.winner ?? 0) }} 赢了！</text>
+			</view>
+			<view class="result-row">
+				<UiIcon name="alert" :size="24" />
+				<text class="skull" :style="skullStyle">{{ session.displayNameOf(snap?.result?.loser ?? 0) }} 输了</text>
+			</view>
 			<text class="counts" :style="mutedStyle">
 				次数：{{ (snap?.shakeCounts ?? []).join(' · ') }}
 			</text>
@@ -43,6 +49,7 @@
 	import { ref, computed } from 'vue'
 	import AppButton from '@/components/AppButton.uvue'
 	import GamePausedOverlay from '@/components/GamePausedOverlay.uvue'
+	import UiIcon from '@/components/UiIcon.uvue'
 	import { useSession } from '@/stores/session'
 	import { useSettings } from '@/stores/settings'
 	import { themes } from '@/theme/tokens'
@@ -84,7 +91,6 @@
 	})
 
 	const containerStyle = computed(() => ({ backgroundColor: tokens.value.bg }))
-	const bigEmojiStyle = computed(() => ({ textShadow: tokens.value.emojiShadow }))
 	const countStyle = computed(() => ({ color: tokens.value.primary }))
 	const trophyStyle = computed(() => ({ color: tokens.value.success }))
 	const skullStyle = computed(() => ({ color: tokens.value.danger }))
@@ -250,7 +256,6 @@
 		min-height: 100vh;
 		align-items: center;
 	}
-	.big { font-size: 100px; }
 	.title {
 		font-size: 22px;
 		font-weight: bold;
@@ -288,14 +293,20 @@
 		align-items: center;
 		margin-top: 24px;
 	}
+	.result-row {
+		flex-direction: row;
+		align-items: center;
+	}
 	.trophy {
 		font-size: 22px;
 		font-weight: bold;
+		margin-left: 10px;
 	}
 	.skull {
 		font-size: 20px;
 		font-weight: bold;
 		margin-top: 8px;
+		margin-left: 10px;
 	}
 	.counts {
 		margin-top: 12px;

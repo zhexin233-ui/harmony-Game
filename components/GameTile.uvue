@@ -1,6 +1,6 @@
 <template>
 	<view class="tile" :style="tileStyle" :class="{ disabled: disabled }" @tap="onTap">
-		<text class="emoji">{{ emoji }}</text>
+		<UiIcon :name="iconKey" :size="34" :opacity="disabled ? 0.5 : 1" />
 		<text class="name" :style="nameStyle">{{ name }}</text>
 		<text v-if="hint" class="hint" :style="hintStyle">{{ hint }}</text>
 	</view>
@@ -8,11 +8,13 @@
 
 <script setup lang="uts">
 	import { computed } from 'vue'
+	import UiIcon from '@/components/UiIcon.uvue'
 	import { useSettings } from '@/stores/settings'
 	import { themes } from '@/theme/tokens'
+	import type { IconKey } from '@/ui/icons'
 
 	const props = defineProps<{
-		emoji : string
+		iconKey : IconKey
 		name : string
 		hint ?: string
 		disabled ?: boolean
@@ -42,7 +44,6 @@
 		min-height: 110px;
 		justify-content: center;
 	}
-	.emoji { font-size: 34px; }
 	.name {
 		margin-top: 6px;
 		font-size: 14px;

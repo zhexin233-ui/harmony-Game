@@ -1,27 +1,29 @@
 <template>
 	<view class="theme-card" :class="{ active: active, neon: tone === 'neon' }" :style="cardStyle" @tap="onTap">
 		<view class="theme-badge" :style="badgeStyle">
-			<text class="theme-emoji" :style="emojiStyle">{{ emoji }}</text>
+			<UiIcon :name="iconKey" :size="42" />
 		</view>
 		<text class="theme-title" :style="titleStyle">{{ title }}</text>
 		<text class="theme-subtitle" :style="subtitleStyle">{{ subtitle }}</text>
 		<view class="theme-check" :style="checkStyle">
-			<text class="theme-check-text" :style="checkTextStyle">{{ active ? '✓' : '○' }}</text>
+			<UiIcon :name="active ? 'check-on' : 'check-off'" :size="20" />
 		</view>
 	</view>
 </template>
 
 <script setup lang="uts">
 	import { computed } from 'vue'
+	import UiIcon from '@/components/UiIcon.uvue'
 	import { useSettings } from '@/stores/settings'
 	import { themes } from '@/theme/tokens'
 	import type { Theme } from '@/theme/tokens'
+	import type { IconKey } from '@/ui/icons'
 
 	const props = defineProps<{
 		theme : Theme
 		title : string
 		subtitle : string
-		emoji : string
+		iconKey : IconKey
 		tone : 'soft' | 'neon'
 		active : boolean
 	}>()
@@ -39,9 +41,6 @@
 	const badgeStyle = computed(() => ({
 		backgroundColor: props.tone === 'neon' ? themes.neon.surfaceHigh : tokens.value.surfaceHigh
 	}))
-	const emojiStyle = computed(() => ({
-		textShadow: props.tone === 'neon' ? themes.neon.emojiShadow : 'none'
-	}))
 	const titleStyle = computed(() => ({
 		color: props.tone === 'neon' ? themes.neon.text : tokens.value.text
 	}))
@@ -49,10 +48,7 @@
 		color: props.tone === 'neon' ? themes.neon.textMuted : tokens.value.textMuted
 	}))
 	const checkStyle = computed(() => ({
-		backgroundColor: props.active ? tokens.value.navActiveBg : tokens.value.surfaceLow
-	}))
-	const checkTextStyle = computed(() => ({
-		color: props.active ? tokens.value.navActiveText : tokens.value.textMuted
+		backgroundColor: 'transparent'
 	}))
 
 	function onTap() {
@@ -80,9 +76,6 @@
 		justify-content: center;
 		margin-bottom: 14px;
 	}
-	.theme-emoji {
-		font-size: 42px;
-	}
 	.theme-title {
 		font-size: 25px;
 		font-weight: 800;
@@ -102,9 +95,5 @@
 		border-radius: 15px;
 		align-items: center;
 		justify-content: center;
-	}
-	.theme-check-text {
-		font-size: 16px;
-		font-weight: bold;
 	}
 </style>

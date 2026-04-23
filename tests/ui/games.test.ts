@@ -11,6 +11,7 @@ import {
 describe('games ui logic', () => {
   it('保留运气派和实力派两组游戏', () => {
     expect(GAME_GROUPS.map((group) => group.title)).toEqual(['运气派', '实力派'])
+    expect(GAME_GROUPS.map((group) => group.iconKey)).toEqual(['group-luck', 'group-skill'])
     expect(GAME_GROUPS[0].games.map((game) => game.id)).toEqual(['bomb', 'crocodile', 'wheel'])
     expect(GAME_GROUPS[1].games.map((game) => game.id)).toEqual(['horse-race', 'reaction'])
   })
@@ -47,11 +48,11 @@ describe('games ui logic', () => {
     })
   })
 
-  it('图片失败时降级为 emoji', () => {
+  it('图片失败时降级为 svg 图标', () => {
     const bomb = GAME_GROUPS[0].games.find((game) => game.id === 'bomb')!
     expect(resolveGameCover(bomb, new Set(['bomb']))).toEqual({
-      mode: 'emoji',
-      value: '💣'
+      mode: 'icon',
+      value: 'game-bomb'
     })
   })
 })
