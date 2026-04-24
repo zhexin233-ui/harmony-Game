@@ -5,7 +5,8 @@
 				v-if="coverMode === 'image'"
 				class="cover-image"
 				:src="cover"
-				mode="aspectFit"
+				:mode="coverPresentation.imageMode"
+				:style="coverImageStyle"
 				@error="onImageError"
 			/>
 			<UiIcon v-else class="cover-icon" :name="fallbackIconKey" :size="56" :opacity="disabled ? 0.56 : 1" />
@@ -23,6 +24,7 @@
 	import UiIcon from '@/components/UiIcon.uvue'
 	import { useSettings } from '@/stores/settings'
 	import { themes } from '@/theme/tokens'
+	import { getGameCoverImageStyle, getGameCoverPresentation } from '@/ui/games'
 	import type { IconKey } from '@/ui/icons'
 
 	const props = defineProps<{
@@ -49,6 +51,8 @@
 	const imageFailed = ref(false)
 
 	const coverMode = computed(() => imageFailed.value || props.cover.length === 0 ? 'icon' : 'image')
+	const coverPresentation = computed(() => getGameCoverPresentation(coverMode.value))
+	const coverImageStyle = computed(() => getGameCoverImageStyle(coverMode.value))
 
 	const cardStyle = computed(() => ({
 		backgroundColor: tokens.value.cardBg,
@@ -57,7 +61,7 @@
 		width: props.cardWidth ?? '48%'
 	}))
 	const coverStyle = computed(() => ({
-		backgroundColor: props.disabled ? tokens.value.disabledBg : tokens.value.imageCardBg,
+		backgroundColor: props.disabled ? tokens.value.disabledBg : coverPresentation.value.backgroundColor || tokens.value.imageCardBg,
 		height: props.coverSize ?? '168px'
 	}))
 	const pillStyle = computed(() => ({

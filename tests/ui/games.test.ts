@@ -6,6 +6,8 @@ import {
   getGameCardLayoutStyle,
   getGameRoute,
   getVisibleGameGroups,
+  getGameCoverImageStyle,
+  getGameCoverPresentation,
   resolveGameCover
 } from '@/ui/games'
 
@@ -88,6 +90,27 @@ describe('games ui logic', () => {
     })).toEqual({
       cardWidth: '187px',
       coverSize: '187px'
+    })
+  })
+
+  it('图片封面铺满容器且留边背景保持白色', () => {
+    expect(getGameCoverPresentation('image')).toEqual({
+      backgroundColor: '#ffffff',
+      imageMode: 'aspectFill'
+    })
+  })
+
+  it('图标兜底封面继续使用主题背景和等比适配', () => {
+    expect(getGameCoverPresentation('icon')).toEqual({
+      backgroundColor: '',
+      imageMode: 'aspectFit'
+    })
+  })
+
+  it('图片封面略放大以减少素材自身留白', () => {
+    expect(getGameCoverImageStyle('image')).toEqual({
+      width: '116%',
+      height: '116%'
     })
   })
 })

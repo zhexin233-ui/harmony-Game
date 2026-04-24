@@ -27,6 +27,18 @@ export type CoverDisplay =
   | { mode: 'image'; value: string }
   | { mode: 'icon'; value: IconKey }
 
+export type GameCoverMode = CoverDisplay['mode']
+
+export type GameCoverPresentation = {
+  backgroundColor: string
+  imageMode: 'aspectFill' | 'aspectFit'
+}
+
+export type GameCoverImageStyle = {
+  width: string
+  height: string
+}
+
 export type GameCardLayoutStyle = {
   cardWidth: string
   coverSize: string
@@ -35,6 +47,8 @@ export type GameCardLayoutStyle = {
 const GAME_GRID_HORIZONTAL_PADDING_PX = 16
 const GAME_CARD_GAP_PX = 12
 const GAME_GRID_COLUMNS = 2
+const GAME_COVER_IMAGE_BACKGROUND = '#ffffff'
+const GAME_COVER_IMAGE_SCALE = '116%'
 
 export const GAME_GROUPS: GameGroup[] = [
   {
@@ -136,6 +150,34 @@ export function resolveGameCover(game: GameMeta, failedIds: Set<GameId>): CoverD
     return { mode: 'icon', value: game.fallbackIconKey }
   }
   return { mode: 'image', value: game.cover }
+}
+
+export function getGameCoverPresentation(mode: GameCoverMode): GameCoverPresentation {
+  if (mode === 'image') {
+    return {
+      backgroundColor: GAME_COVER_IMAGE_BACKGROUND,
+      imageMode: 'aspectFill'
+    }
+  }
+
+  return {
+    backgroundColor: '',
+    imageMode: 'aspectFit'
+  }
+}
+
+export function getGameCoverImageStyle(mode: GameCoverMode): GameCoverImageStyle {
+  if (mode === 'image') {
+    return {
+      width: GAME_COVER_IMAGE_SCALE,
+      height: GAME_COVER_IMAGE_SCALE
+    }
+  }
+
+  return {
+    width: '100%',
+    height: '100%'
+  }
 }
 
 export function getGameCardLayoutStyle(
