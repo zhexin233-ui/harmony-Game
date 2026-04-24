@@ -48,8 +48,14 @@
                 "large" : "static/icons/icon-216.png"
             },
             "requestPermissions" : [
-                { "name" : "ohos.permission.VIBRATE" }
-            ]
+                {
+                    "name" : "ohos.permission.VIBRATE"
+                },
+                {
+                    "name" : "ohos.permission.ACCELEROMETER"
+                }
+            ],
+            "bundleName" : "juhui.happy.huawei"
         }
     }
 }

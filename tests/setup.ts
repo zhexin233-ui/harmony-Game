@@ -7,6 +7,16 @@ const storageMap = new Map<string, unknown>()
   setStorageSync(key: string, value: unknown) { storageMap.set(key, value) },
   getStorageSync(key: string) { return storageMap.get(key) ?? '' },
   removeStorageSync(key: string) { storageMap.delete(key) },
+  getWindowInfo: vi.fn(() => ({
+    windowWidth: 390,
+    statusBarHeight: 0,
+    safeAreaInsets: {
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0
+    }
+  })),
   vibrateShort: vi.fn(),
   vibrateLong: vi.fn(),
   createInnerAudioContext: vi.fn(() => ({
@@ -21,4 +31,17 @@ const storageMap = new Map<string, unknown>()
   setKeepScreenOn: vi.fn()
 }
 
-beforeEach(() => { storageMap.clear() })
+beforeEach(() => {
+  storageMap.clear()
+  ;(globalThis as any).uni.getWindowInfo.mockReset()
+  ;(globalThis as any).uni.getWindowInfo.mockReturnValue({
+    windowWidth: 390,
+    statusBarHeight: 0,
+    safeAreaInsets: {
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0
+    }
+  })
+})

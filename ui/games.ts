@@ -1,5 +1,6 @@
 import type { GameId } from '@/stores/session'
 import type { IconKey } from '@/ui/icons'
+import { normalizeWindowLayoutMetrics, type WindowLayoutMetrics } from '@/ui/window-layout'
 
 export type GameCategory = 'luck' | 'skill'
 export type GameFilter = 'all' | GameCategory
@@ -26,6 +27,15 @@ export type CoverDisplay =
   | { mode: 'image'; value: string }
   | { mode: 'icon'; value: IconKey }
 
+export type GameCardLayoutStyle = {
+  cardWidth: string
+  coverSize: string
+}
+
+const GAME_GRID_HORIZONTAL_PADDING_PX = 16
+const GAME_CARD_GAP_PX = 12
+const GAME_GRID_COLUMNS = 2
+
 export const GAME_GROUPS: GameGroup[] = [
   {
     category: 'luck',
@@ -40,7 +50,7 @@ export const GAME_GROUPS: GameGroup[] = [
         min: 2,
         max: 8,
         category: 'luck',
-        cover: '/static/game-covers/game1.png'
+        cover: '/static/game-covers/game5.png'
       },
       {
         id: 'crocodile',
@@ -48,9 +58,9 @@ export const GAME_GROUPS: GameGroup[] = [
         summary: '试试手气，别被咬到',
         fallbackIconKey: 'game-crocodile',
         min: 2,
-        max: 8,
+        max: 16,
         category: 'luck',
-        cover: '/static/game-covers/game2.png'
+        cover: '/static/game-covers/game4.png'
       },
       {
         id: 'wheel',
@@ -77,7 +87,7 @@ export const GAME_GROUPS: GameGroup[] = [
         min: 2,
         max: 8,
         category: 'skill',
-        cover: '/static/game-covers/game4.png'
+        cover: '/static/game-covers/game2.png'
       },
       {
         id: 'reaction',
@@ -87,7 +97,7 @@ export const GAME_GROUPS: GameGroup[] = [
         min: 2,
         max: 5,
         category: 'skill',
-        cover: '/static/game-covers/game5.png'
+        cover: '/static/game-covers/game1.png'
       }
     ]
   }
@@ -126,4 +136,21 @@ export function resolveGameCover(game: GameMeta, failedIds: Set<GameId>): CoverD
     return { mode: 'icon', value: game.fallbackIconKey }
   }
   return { mode: 'image', value: game.cover }
+}
+
+export function getGameCardLayoutStyle(
+  metrics?: Partial<WindowLayoutMetrics>
+): GameCardLayoutStyle {
+  const windowMetrics = normalizeWindowLayoutMetrics(metrics)
+  const gridWidth =
+    windowMetrics.windowWidth
+    - windowMetrics.safeAreaLeft
+    - windowMetrics.safeAreaRight
+    - GAME_GRID_HORIZONTAL_PADDING_PX * 2
+  const cardSide = Math.floor((gridWidth - GAME_CARD_GAP_PX) / GAME_GRID_COLUMNS)
+
+  return {
+    cardWidth: `${cardSide}px`,
+    coverSize: `${cardSide}px`
+  }
 }

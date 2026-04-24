@@ -1,0 +1,50 @@
+import { sensor } from '@kit.SensorServiceKit'
+
+type HarmonyAccelInterval = 'game' | 'ui' | 'normal'
+type HarmonyAccelListener = (data: sensor.AccelerometerResponse) => void
+
+let currentListener: HarmonyAccelListener | null = null
+let nativeListener: ((data: sensor.AccelerometerResponse) => void) | null = null
+
+export function startHarmonyAccelerometer(
+  listener: HarmonyAccelListener,
+  interval: HarmonyAccelInterval = 'game'
+): boolean {
+  if (interval !== 'game' && interval !== 'ui' && interval !== 'normal') return false
+  stopHarmonyAccelerometer()
+  currentListener = listener
+  nativeListener = function (data: sensor.AccelerometerResponse): void {
+    if (currentListener == null) return
+    const callback = currentListener
+    callback(data)
+  }
+
+  try {
+    const callback = nativeListener
+    if (callback == null) return false
+    sensor.on(sensor.SensorId.ACCELEROMETER, callback)
+    return true
+  } catch (error) {
+    console.error(`startHarmonyAccelerometer failed: ${JSON.stringify(error)}`)
+    currentListener = null
+    nativeListener = null
+    return false
+  }
+}
+
+export function stopHarmonyAccelerometer(): void {
+  if (nativeListener == null) {
+    currentListener = null
+    return
+  }
+  try {
+    const callback = nativeListener
+    if (callback != null) {
+      sensor.off(sensor.SensorId.ACCELEROMETER, callback)
+    }
+  } catch (error) {
+    console.error(`stopHarmonyAccelerometer failed: ${JSON.stringify(error)}`)
+  }
+  currentListener = null
+  nativeListener = null
+}

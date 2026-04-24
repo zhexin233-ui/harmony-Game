@@ -41,19 +41,24 @@
 </template>
 
 <script setup lang="uts">
-	import { computed } from 'vue'
+	import { computed, onMounted, ref } from 'vue'
 	import UiIcon from '@/components/UiIcon.uvue'
 	import UiTopBar from '@/components/UiTopBar.uvue'
 	import BottomNavBar from '@/components/BottomNavBar.uvue'
 	import { usePunishment, type PunishmentRule } from '@/stores/punishment'
 	import { useSettings } from '@/stores/settings'
 	import { themes } from '@/theme/tokens'
+	import { getPageBottomPadding, readWindowLayoutMetrics } from '@/ui/window-layout'
 
 	const store = usePunishment()
 	const settings = useSettings()
 	const tokens = computed(() => themes[settings.theme])
+	const windowMetrics = ref(readWindowLayoutMetrics())
 
-	const pageStyle = computed(() => ({ backgroundColor: tokens.value.bg }))
+	const pageStyle = computed(() => ({
+		backgroundColor: tokens.value.bg,
+		paddingBottom: getPageBottomPadding(94, windowMetrics.value)
+	}))
 	const heroCardStyle = computed(() => ({
 		background: tokens.value.heroCardBg,
 		boxShadow: tokens.value.shadowSoft
@@ -72,6 +77,10 @@
 	const disabledStripStyle = computed(() => ({ backgroundColor: tokens.value.disabledBg }))
 	const actionStyle = computed(() => ({ color: tokens.value.primary }))
 	const dangerActionStyle = computed(() => ({ color: tokens.value.dangerText }))
+
+	onMounted(() => {
+		windowMetrics.value = readWindowLayoutMetrics()
+	})
 
 	function toggle(id: string) { store.toggleRule(id) }
 	function goAdd() { uni.navigateTo({ url: '/pages/punishment/edit?mode=add' }) }
@@ -92,7 +101,6 @@
 	.page {
 		flex: 1;
 		min-height: 100%;
-		padding-bottom: 94px;
 	}
 	.content {
 		flex: 1;

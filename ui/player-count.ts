@@ -1,5 +1,5 @@
 export const PLAYER_COUNT_MIN = 2
-export const PLAYER_COUNT_MAX = 8
+export const PLAYER_COUNT_MAX = 16
 export const DEFAULT_PLAYER_COUNT = 4
 
 export function isValidPlayerCount(count: number | undefined): boolean {

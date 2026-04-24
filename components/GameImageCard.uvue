@@ -35,6 +35,8 @@
 		max : number
 		disabled ?: boolean
 		disabledReason ?: string
+		cardWidth ?: string
+		coverSize ?: string
 	}>()
 
 	const emit = defineEmits<{
@@ -51,10 +53,12 @@
 	const cardStyle = computed(() => ({
 		backgroundColor: tokens.value.cardBg,
 		boxShadow: tokens.value.shadowSoft,
-		opacity: props.disabled ? 0.56 : 1
+		opacity: props.disabled ? 0.56 : 1,
+		width: props.cardWidth ?? '48%'
 	}))
 	const coverStyle = computed(() => ({
-		backgroundColor: props.disabled ? tokens.value.disabledBg : tokens.value.imageCardBg
+		backgroundColor: props.disabled ? tokens.value.disabledBg : tokens.value.imageCardBg,
+		height: props.coverSize ?? '168px'
 	}))
 	const pillStyle = computed(() => ({
 		backgroundColor: tokens.value.success
@@ -82,17 +86,16 @@
 
 <style>
 	.game-card {
-		width: 48%;
 		min-height: 220px;
 		border-radius: 26px;
 		padding: 10px;
 		margin-bottom: 14px;
 		align-items: center;
+		flex-shrink: 0;
 	}
 	.cover {
 		position: relative;
 		width: 100%;
-		aspect-ratio: 1;
 		border-radius: 20px;
 		align-items: center;
 		justify-content: center;

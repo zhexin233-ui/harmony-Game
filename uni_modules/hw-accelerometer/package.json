@@ -1,0 +1,7 @@
+{
+  "id": "hw-accelerometer",
+  "displayName": "鸿蒙加速度传感器",
+  "version": "0.1.0",
+  "description": "为鸿蒙端提供摇一摇赛马使用的加速度传感器订阅",
+  "uni_modules": {}
+}

@@ -14,7 +14,8 @@
 		<view v-else-if="state === 'shaking'" class="shaking">
 			<text class="big-count anim-pulse" :style="countStyle">{{ currentShakeCount }}</text>
 			<text class="remaining" :style="mutedStyle">剩余 {{ remainingSec }} 秒</text>
-			<text class="hint" :style="mutedStyle">用力摇晃手机！</text>
+			<text class="hint" :style="mutedStyle">{{ sensorHint }}</text>
+			<AppButton v-if="!sensorAvailable" label="点按计次" variant="primary" @tap="onManualShake" />
 			<AppButton label="提前结束本轮" variant="ghost" @tap="onFinishPlayer" />
 		</view>
 
@@ -58,6 +59,11 @@
 		type HorseRaceGame,
 		type HorseRaceSnapshot
 	} from '@/games/horse-race/logic'
+	import {
+		recordHorseRaceManualShake,
+		recordHorseRaceSensorSample,
+		type HorseRaceShakeRecord
+	} from '@/games/horse-race/sensor'
 	import { startAccelerometer, stopAccelerometer } from '@/native/sensor'
 	import { preload, play } from '@/native/audio'
 	import { vibrateShort, vibrateLong } from '@/native/vibrator'
@@ -73,11 +79,14 @@
 	const snap = ref<HorseRaceSnapshot | null>(null)
 	const paused = ref(false)
 	const prepCountdown = ref(0)
+	const sensorAvailable = ref(true)
 
 	let tickTimer : number | null = null
 	let prepTimer : number | null = null
+	let sensorFallbackTimer : number | null = null
 	let lastTickAt = 0
 	let accelActive = false
+	let sensorSampled = false
 
 	const state = computed(() => snap.value?.state ?? 'ready')
 	const currentShakeCount = computed(() => {
@@ -91,6 +100,10 @@
 		const remain = Math.max(0, s.shakeDurationMs - s.elapsedMs)
 		return Math.ceil(remain / 1000)
 	})
+	const sensorHint = computed(() => sensorAvailable.value
+		? '用力摇晃手机！'
+		: '传感器不可用，点按计次继续游戏'
+	)
 
 	const containerStyle = computed(() => getGameViewportStyle(tokens.value.bg, windowMetrics.value))
 	const countStyle = computed(() => ({ color: tokens.value.primary }))
@@ -162,24 +175,51 @@
 		}
 	}
 
+	function clearSensorFallbackTimer() {
+		if (sensorFallbackTimer != null) {
+			clearTimeout(sensorFallbackTimer)
+			sensorFallbackTimer = null
+		}
+	}
+
+	function applyShakeRecord(record: HorseRaceShakeRecord) {
+		snap.value = record.snapshot
+		if (record.increased) vibrateShort()
+	}
+
 	function startAccel() {
 		if (accelActive) return
 		accelActive = true
-		startAccelerometer((data) => {
-			const mag = Math.sqrt(data.x * data.x + data.y * data.y + data.z * data.z)
-			const prev = snap.value?.shakeCounts[snap.value.currentPlayer] ?? 0
-			game.value?.onSample(mag)
-			update()
-			if ((snap.value?.shakeCounts[snap.value.currentPlayer] ?? 0) > prev) {
-				vibrateShort()
-			}
+		sensorAvailable.value = true
+		sensorSampled = false
+		const started = startAccelerometer((data) => {
+			if (game.value == null || snap.value == null) return
+			sensorSampled = true
+			sensorAvailable.value = true
+			applyShakeRecord(recordHorseRaceSensorSample(game.value, snap.value, data))
 		}, 'game')
+		if (!started) {
+			sensorAvailable.value = false
+			return
+		}
+		sensorFallbackTimer = setTimeout(() => {
+			if (!sensorSampled && snap.value?.state === 'shaking') {
+				sensorAvailable.value = false
+			}
+		}, 1200) as unknown as number
 	}
 
 	function stopAccel() {
 		if (!accelActive) return
 		accelActive = false
+		clearSensorFallbackTimer()
 		stopAccelerometer()
+	}
+
+	function onManualShake() {
+		if (game.value == null || snap.value == null) return
+		play('click')
+		applyShakeRecord(recordHorseRaceManualShake(game.value, snap.value))
 	}
 
 	function onFinishPlayer() {

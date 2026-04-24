@@ -2,15 +2,16 @@ import { describe, it, expect } from 'vitest'
 import { createCrocodileGame } from '@/games/crocodile/logic'
 
 describe('createCrocodileGame', () => {
-  it('要求人数 2-8，否则抛错', () => {
+  it('要求人数 2-16，否则抛错', () => {
     expect(() => createCrocodileGame({ playerCount: 1 })).toThrow()
-    expect(() => createCrocodileGame({ playerCount: 9 })).toThrow()
+    expect(() => createCrocodileGame({ playerCount: 16 })).not.toThrow()
+    expect(() => createCrocodileGame({ playerCount: 17 })).toThrow()
   })
 
-  it('牙齿数分段：4 人 8 颗、6 人 10 颗、8 人 12 颗', () => {
-    expect(createCrocodileGame({ playerCount: 4, random: () => 0 }).getSnapshot().totalTeeth).toBe(8)
-    expect(createCrocodileGame({ playerCount: 6, random: () => 0 }).getSnapshot().totalTeeth).toBe(10)
-    expect(createCrocodileGame({ playerCount: 8, random: () => 0 }).getSnapshot().totalTeeth).toBe(12)
+  it('牙齿数按（人数 - 1）* 2 计算', () => {
+    expect(createCrocodileGame({ playerCount: 2, random: () => 0 }).getSnapshot().totalTeeth).toBe(2)
+    expect(createCrocodileGame({ playerCount: 4, random: () => 0 }).getSnapshot().totalTeeth).toBe(6)
+    expect(createCrocodileGame({ playerCount: 16, random: () => 0 }).getSnapshot().totalTeeth).toBe(30)
   })
 
   it('初始化：ready 状态，pressedTeeth 空，currentPlayer=0', () => {
@@ -29,7 +30,7 @@ describe('createCrocodileGame', () => {
 
   it('random=0.99 时陷阱牙索引为 totalTeeth-1', () => {
     const g = createCrocodileGame({ playerCount: 4, random: () => 0.99 })
-    expect(g.getSnapshot().trappedTooth).toBe(7)
+    expect(g.getSnapshot().trappedTooth).toBe(5)
   })
 
   it('start 进入 playing', () => {
@@ -86,10 +87,11 @@ describe('createCrocodileGame', () => {
   })
 
   it('轮次循环：到末位玩家后回到 0', () => {
-    const g = createCrocodileGame({ playerCount: 2, random: () => 0 })  // 陷阱 0
+    const g = createCrocodileGame({ playerCount: 3, random: () => 0 })  // 陷阱 0
     g.start()
     g.tapTooth(1)  // p0 → p1
-    g.tapTooth(2)  // p1 → p0
+    g.tapTooth(2)  // p1 → p2
+    g.tapTooth(3)  // p2 → p0
     expect(g.getSnapshot().currentPlayer).toBe(0)
   })
 

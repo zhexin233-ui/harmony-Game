@@ -1,6 +1,6 @@
 <template>
 	<view class="page" :style="pageStyle">
-		<UiTopBar title="选择人数" subtitle="2 到 8 人都可以玩" rightIcon="nav-home" rightUrl="/pages/home/index" />
+		<UiTopBar title="选择人数" subtitle="2 到 16 人都可以玩" rightIcon="nav-home" rightUrl="/pages/home/index" />
 		<view class="decor decor-left" :style="decorPrimaryStyle"></view>
 		<view class="decor decor-right" :style="decorSecondaryStyle"></view>
 
@@ -24,7 +24,7 @@
 					</view>
 				</view>
 				<view class="range-pill" :style="rangeStyle">
-					<text class="range-text" :style="rangeTextStyle">2 - 8 人</text>
+					<text class="range-text" :style="rangeTextStyle">2 - 16 人</text>
 				</view>
 			</view>
 

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Player Selection</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&amp;family=Be+Vietnam+Pro:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-primary-fixed": "#000000",
+                      "error-dim": "#9f0519",
+                      "primary-container": "#ff6bb9",
+                      "primary-fixed": "#ff6bb9",
+                      "inverse-surface": "#220214",
+                      "on-tertiary-container": "#5f5600",
+                      "surface-container-high": "#ffd8e7",
+                      "tertiary": "#665c00",
+                      "on-secondary-fixed": "#00423c",
+                      "on-tertiary-fixed-variant": "#6a6000",
+                      "surface-container": "#ffe0ec",
+                      "on-error-container": "#570008",
+                      "error-container": "#fb5151",
+                      "on-error": "#ffefee",
+                      "error": "#b31b25",
+                      "primary-dim": "#9b0065",
+                      "on-tertiary-fixed": "#4b4400",
+                      "secondary": "#00675f",
+                      "surface-container-highest": "#ffd0e3",
+                      "surface-dim": "#ffc4dd",
+                      "surface-tint": "#b00074",
+                      "outline": "#9b687f",
+                      "background": "#fff4f6",
+                      "tertiary-dim": "#595000",
+                      "inverse-primary": "#fe4ab0",
+                      "tertiary-fixed-dim": "#f0dc2b",
+                      "on-secondary-container": "#00574f",
+                      "on-primary-container": "#4a002e",
+                      "outline-variant": "#d69db6",
+                      "on-primary": "#ffeff3",
+                      "surface-container-low": "#ffecf2",
+                      "primary": "#b00074",
+                      "primary-fixed-dim": "#fe4ab0",
+                      "surface": "#fff4f6",
+                      "on-secondary-fixed-variant": "#006159",
+                      "on-tertiary": "#fff4b0",
+                      "tertiary-fixed": "#ffeb3b",
+                      "secondary-container": "#56f1e0",
+                      "on-secondary": "#bffff5",
+                      "surface-variant": "#ffd0e3",
+                      "on-background": "#492136",
+                      "secondary-fixed": "#56f1e0",
+                      "surface-bright": "#fff4f6",
+                      "surface-container-lowest": "#ffffff",
+                      "secondary-dim": "#005a52",
+                      "inverse-on-surface": "#c58da6",
+                      "on-primary-fixed-variant": "#5b003a",
+                      "secondary-fixed-dim": "#43e2d2",
+                      "on-surface": "#492136",
+                      "tertiary-container": "#ffeb3b",
+                      "on-surface-variant": "#7c4d64"
+              },
+              "borderRadius": {
+                      "DEFAULT": "1rem",
+                      "lg": "2rem",
+                      "xl": "3rem",
+                      "full": "9999px"
+              },
+              "spacing": {},
+              "fontFamily": {
+                      "headline": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "body": [
+                              "Be Vietnam Pro"
+                      ],
+                      "label": [
+                              "Plus Jakarta Sans"
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        body { font-family: 'Be Vietnam Pro', sans-serif; }
+        h1, h2, h3, h4, h5, h6, .font-headline { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col items-center justify-center relative overflow-hidden font-body">
+<!-- TopAppBar -->
+<header class="sticky top-0 w-full z-50 flex justify-between items-center px-6 py-4 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-2xl shadow-[0_20px_50px_rgba(255,64,129,0.05)] no-border bg-surface-container-low docked full-width top-0">
+<button class="scale-95 active:scale-90 transition-transform duration-200 text-pink-600 dark:text-pink-400 hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-2xl">arrow_back</span>
+</button>
+<h1 class="font-['Plus_Jakarta_Sans'] tracking-tighter font-bold text-xl text-zinc-900 dark:text-white">Playground</h1>
+<div class="w-8"></div> <!-- Spacer to center the headline properly -->
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow flex flex-col items-center justify-center w-full max-w-md px-6 py-12 gap-12 z-10 relative">
+<!-- Decorative Background Elements for Kinetic Playground Vibe -->
+<div class="absolute top-1/4 left-0 w-64 h-64 bg-primary-container rounded-full mix-blend-multiply filter blur-[80px] opacity-40 animate-blob"></div>
+<div class="absolute top-1/3 right-0 w-72 h-72 bg-secondary-container rounded-full mix-blend-multiply filter blur-[80px] opacity-40 animate-blob animation-delay-2000"></div>
+<!-- Title -->
+<div class="text-center space-y-2 z-10">
+<h2 class="font-headline text-4xl font-extrabold tracking-tight text-on-surface">How many players?</h2>
+<p class="text-on-surface-variant font-medium text-lg">Gather your crew.</p>
+</div>
+<!-- Player Count Selector Area -->
+<div class="flex flex-col items-center justify-center w-full z-10 gap-8 bg-surface-container-low p-10 rounded-xl shadow-[0_40px_60px_rgba(73,33,54,0.06)] relative">
+<div class="flex items-center justify-between w-full">
+<!-- Minus Button -->
+<button class="w-16 h-16 rounded-full bg-surface-container-highest shadow-[0_10px_20px_rgba(73,33,54,0.08)] flex items-center justify-center text-on-surface active:scale-90 transition-transform duration-200 hover:bg-surface-dim">
+<span class="material-symbols-outlined text-3xl font-bold">remove</span>
+</button>
+<!-- Number Display -->
+<div class="relative w-32 h-32 flex items-center justify-center">
+<!-- Glow behind number -->
+<div class="absolute inset-0 bg-primary/10 rounded-full blur-xl"></div>
+<span class="font-headline text-7xl font-black text-primary drop-shadow-md z-10 tabular-nums">4</span>
+</div>
+<!-- Plus Button -->
+<button class="w-16 h-16 rounded-full bg-primary shadow-[0_10px_30px_rgba(176,0,116,0.3)] flex items-center justify-center text-on-primary active:scale-90 transition-transform duration-200 hover:bg-primary-dim">
+<span class="material-symbols-outlined text-3xl font-bold">add</span>
+</button>
+</div>
+<!-- Helpful text indicating range -->
+<div class="text-on-surface-variant/70 text-sm font-bold uppercase tracking-widest bg-surface-container py-2 px-4 rounded-full">
+                2 - 8 Players
+            </div>
+</div>
+<!-- Action Button -->
+<button class="w-full py-5 rounded-lg bg-gradient-to-r from-primary to-primary-container shadow-[0_20px_40px_rgba(176,0,116,0.2)] flex items-center justify-center gap-3 text-on-primary font-headline font-bold text-xl active:scale-[0.98] transition-transform duration-200 relative overflow-hidden group z-10 mt-8">
+<div class="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 ease-in-out"></div>
+<span>Let's Play</span>
+<span class="material-symbols-outlined font-bold">arrow_forward</span>
+</button>
+</main>
+<!-- BottomNavBar (Suppressed as per rules for linear flow/setup screens, but included structure if needed based on the prompt's implied global context. Decided to omit to focus on the canvas as per "Linear/Transactional" rule) -->
+<!-- Removed Bottom Nav to keep focus on the selection task -->
+</body></html>

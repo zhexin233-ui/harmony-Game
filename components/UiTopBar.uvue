@@ -14,12 +14,13 @@
 </template>
 
 <script setup lang="uts">
-	import { computed } from 'vue'
+	import { computed, onMounted, ref } from 'vue'
 	import UiIcon from '@/components/UiIcon.uvue'
 	import { useSettings } from '@/stores/settings'
 	import { themes } from '@/theme/tokens'
 	import type { IconKey } from '@/ui/icons'
 	import { getTopBarPaddingStyle } from '@/ui/top-bar'
+	import { readWindowLayoutMetrics } from '@/ui/window-layout'
 
 	const props = defineProps<{
 		title : string
@@ -39,15 +40,16 @@
 	const showBack = computed(() => props.showBack ?? true)
 	const leftIcon = computed(() => showBack.value ? 'back' as IconKey : 'logo-dice' as IconKey)
 	const rightIcon = computed(() => props.rightIcon ?? 'nav-settings')
-	const topBarPaddingStyle = getTopBarPaddingStyle()
+	const windowMetrics = ref(readWindowLayoutMetrics())
+	const topBarPaddingStyle = computed(() => getTopBarPaddingStyle(windowMetrics.value))
 
 	const barStyle = computed(() => ({
 		backgroundColor: tokens.value.topBarBg,
 		boxShadow: tokens.value.shadowSoft,
-		paddingTop: topBarPaddingStyle.paddingTop,
-		paddingRight: topBarPaddingStyle.paddingRight,
-		paddingBottom: topBarPaddingStyle.paddingBottom,
-		paddingLeft: topBarPaddingStyle.paddingLeft
+		paddingTop: topBarPaddingStyle.value.paddingTop,
+		paddingRight: topBarPaddingStyle.value.paddingRight,
+		paddingBottom: topBarPaddingStyle.value.paddingBottom,
+		paddingLeft: topBarPaddingStyle.value.paddingLeft
 	}))
 	const iconStyle = computed(() => ({
 		backgroundColor: tokens.value.surfaceHigh
@@ -58,6 +60,10 @@
 	const subtitleStyle = computed(() => ({
 		color: tokens.value.textMuted
 	}))
+
+	onMounted(() => {
+		windowMetrics.value = readWindowLayoutMetrics()
+	})
 
 	function onBack() {
 		emit('back')

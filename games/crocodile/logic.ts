@@ -21,17 +21,15 @@ export type CrocodileGame = {
 }
 
 function toothCountFor(playerCount: number): number {
-  if (playerCount <= 4) return 8
-  if (playerCount <= 6) return 10
-  return 12
+  return (playerCount - 1) * 2
 }
 
 export function createCrocodileGame(opts: {
   playerCount: number
   random?: RandomSource
 }): CrocodileGame {
-  if (opts.playerCount < 2 || opts.playerCount > 8) {
-    throw new Error(`playerCount must be 2-8, got ${opts.playerCount}`)
+  if (opts.playerCount < 2 || opts.playerCount > 16) {
+    throw new Error(`playerCount must be 2-16, got ${opts.playerCount}`)
   }
   const random = opts.random ?? defaultRandom
   const totalTeeth = toothCountFor(opts.playerCount)

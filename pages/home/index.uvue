@@ -52,17 +52,22 @@
 </template>
 
 <script setup lang="uts">
-	import { computed } from 'vue'
+	import { computed, onMounted, ref } from 'vue'
 	import UiIcon from '@/components/UiIcon.uvue'
 	import UiTopBar from '@/components/UiTopBar.uvue'
 	import BottomNavBar from '@/components/BottomNavBar.uvue'
 	import { useSettings } from '@/stores/settings'
 	import { themes } from '@/theme/tokens'
+	import { getPageBottomPadding, readWindowLayoutMetrics } from '@/ui/window-layout'
 
 	const settings = useSettings()
 	const tokens = computed(() => themes[settings.theme])
+	const windowMetrics = ref(readWindowLayoutMetrics())
 
-	const pageStyle = computed(() => ({ backgroundColor: tokens.value.bg }))
+	const pageStyle = computed(() => ({
+		backgroundColor: tokens.value.bg,
+		paddingBottom: getPageBottomPadding(98, windowMetrics.value)
+	}))
 	const titleStyle = computed(() => ({ color: tokens.value.text }))
 	const subtitleStyle = computed(() => ({ color: tokens.value.textMuted }))
 	const heroCardStyle = computed(() => ({
@@ -84,6 +89,10 @@
 	const decorPrimaryStyle = computed(() => ({ backgroundColor: tokens.value.decorPrimary }))
 	const decorSecondaryStyle = computed(() => ({ backgroundColor: tokens.value.decorSecondary }))
 
+	onMounted(() => {
+		windowMetrics.value = readWindowLayoutMetrics()
+	})
+
 	function goStart() { uni.navigateTo({ url: '/pages/lobby/player-count' }) }
 	function goPunishment() { uni.navigateTo({ url: '/pages/punishment/index' }) }
 	function goSettings() { uni.navigateTo({ url: '/pages/settings/index' }) }
@@ -93,7 +102,6 @@
 	.page {
 		flex: 1;
 		min-height: 100%;
-		padding-bottom: 98px;
 		position: relative;
 		overflow: hidden;
 	}

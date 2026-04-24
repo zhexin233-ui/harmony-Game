@@ -35,6 +35,8 @@
 							:cover="game.cover"
 							:min="game.min"
 							:max="game.max"
+							:cardWidth="cardLayout.cardWidth"
+							:coverSize="cardLayout.coverSize"
 							:disabled="!canPlay(game)"
 							:disabledReason="disabledReason(game)"
 							@tap="enter(game)"
@@ -49,7 +51,7 @@
 </template>
 
 <script setup lang="uts">
-	import { computed, ref } from 'vue'
+	import { computed, onMounted, ref } from 'vue'
 	import UiIcon from '@/components/UiIcon.uvue'
 	import UiTopBar from '@/components/UiTopBar.uvue'
 	import BottomNavBar from '@/components/BottomNavBar.uvue'
@@ -60,24 +62,30 @@
 	import {
 		canPlayGame,
 		getDisabledReason,
+		getGameCardLayoutStyle,
 		getGameRoute,
 		getVisibleGameGroups,
 		type GameFilter,
 		type GameMeta
 	} from '@/ui/games'
+	import { getPageBottomPadding, readWindowLayoutMetrics } from '@/ui/window-layout'
 
 	const session = useSession()
 	const settings = useSettings()
 	const filter = ref<GameFilter>('all')
 	const tokens = computed(() => themes[settings.theme])
 	const groups = computed(() => getVisibleGameGroups(filter.value))
+	const windowMetrics = ref(readWindowLayoutMetrics())
 	const filters = [
 		{ id: 'all' as GameFilter, label: '全部' },
 		{ id: 'luck' as GameFilter, label: '运气派' },
 		{ id: 'skill' as GameFilter, label: '实力派' }
 	]
 
-	const pageStyle = computed(() => ({ backgroundColor: tokens.value.bg }))
+	const pageStyle = computed(() => ({
+		backgroundColor: tokens.value.bg,
+		paddingBottom: getPageBottomPadding(92, windowMetrics.value)
+	}))
 	const titleStyle = computed(() => ({ color: tokens.value.primary }))
 	const filterWrapStyle = computed(() => ({ backgroundColor: tokens.value.surfaceHighest }))
 	const activeFilterStyle = computed(() => ({ backgroundColor: tokens.value.primary }))
@@ -85,6 +93,11 @@
 	const activeFilterTextStyle = computed(() => ({ color: tokens.value.onPrimary }))
 	const inactiveFilterTextStyle = computed(() => ({ color: tokens.value.textMuted }))
 	const groupTitleStyle = computed(() => ({ color: tokens.value.text }))
+	const cardLayout = computed(() => getGameCardLayoutStyle(windowMetrics.value))
+
+	onMounted(() => {
+		windowMetrics.value = readWindowLayoutMetrics()
+	})
 
 	function canPlay(game : GameMeta) : boolean {
 		return canPlayGame(game, session.playerCount)
@@ -103,7 +116,6 @@
 	.page {
 		flex: 1;
 		min-height: 100%;
-		padding-bottom: 92px;
 	}
 	.content {
 		flex: 1;

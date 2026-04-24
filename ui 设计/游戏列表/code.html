@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Game List</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&amp;family=Be+Vietnam+Pro:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary": "#fff4b0",
+                    "secondary": "#00675f",
+                    "on-primary-fixed-variant": "#5b003a",
+                    "on-tertiary-container": "#5f5600",
+                    "surface-container-high": "#ffd8e7",
+                    "error-dim": "#9f0519",
+                    "inverse-primary": "#fe4ab0",
+                    "tertiary": "#665c00",
+                    "on-primary": "#ffeff3",
+                    "error": "#b31b25",
+                    "surface-variant": "#ffd0e3",
+                    "surface-container": "#ffe0ec",
+                    "surface": "#fff4f6",
+                    "on-background": "#492136",
+                    "surface-dim": "#ffc4dd",
+                    "surface-bright": "#fff4f6",
+                    "tertiary-container": "#ffeb3b",
+                    "surface-container-lowest": "#ffffff",
+                    "primary-fixed-dim": "#fe4ab0",
+                    "primary-fixed": "#ff6bb9",
+                    "on-tertiary-fixed-variant": "#6a6000",
+                    "on-primary-container": "#4a002e",
+                    "surface-container-low": "#ffecf2",
+                    "on-error": "#ffefee",
+                    "inverse-on-surface": "#c58da6",
+                    "surface-tint": "#b00074",
+                    "outline-variant": "#d69db6",
+                    "secondary-container": "#56f1e0",
+                    "on-secondary-container": "#00574f",
+                    "tertiary-fixed-dim": "#f0dc2b",
+                    "outline": "#9b687f",
+                    "on-secondary": "#bffff5",
+                    "secondary-dim": "#005a52",
+                    "on-surface": "#492136",
+                    "on-secondary-fixed": "#00423c",
+                    "tertiary-dim": "#595000",
+                    "background": "#fff4f6",
+                    "primary": "#b00074",
+                    "on-surface-variant": "#7c4d64",
+                    "on-error-container": "#570008",
+                    "on-secondary-fixed-variant": "#006159",
+                    "inverse-surface": "#220214",
+                    "surface-container-highest": "#ffd0e3",
+                    "error-container": "#fb5151",
+                    "secondary-fixed": "#56f1e0",
+                    "on-tertiary-fixed": "#4b4400",
+                    "tertiary-fixed": "#ffeb3b",
+                    "primary-dim": "#9b0065",
+                    "primary-container": "#ff6bb9",
+                    "on-primary-fixed": "#000000",
+                    "secondary-fixed-dim": "#43e2d2"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "spacing": {},
+            "fontFamily": {
+                    "headline": [
+                            "Plus Jakarta Sans"
+                    ],
+                    "body": [
+                            "Be Vietnam Pro"
+                    ],
+                    "label": [
+                            "Plus Jakarta Sans"
+                    ]
+            }
+        },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Be Vietnam Pro', sans-serif; }
+        h1, h2, h3, h4, h5, h6, .font-headline { font-family: 'Plus Jakarta Sans', sans-serif; letter-spacing: -0.02em; }
+        .label-sm { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen pb-24">
+<!-- TopAppBar -->
+<header class="docked full-width top-0 no-border bg-surface-container-low shadow-[0_20px_50px_rgba(255,64,129,0.05)] bg-white/70 backdrop-blur-lg flex justify-between items-center w-full px-6 py-4 sticky z-40">
+<button aria-label="Menu" class="text-pink-600 scale-95 active:transition-all hover:scale-105 transition-transform">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="font-['Plus_Jakarta_Sans'] tracking-tighter font-bold text-2xl text-pink-600">Playground</h1>
+<div class="w-8 h-8 rounded-full bg-primary-container overflow-hidden flex items-center justify-center scale-95 active:transition-all hover:scale-105 transition-transform cursor-pointer">
+<span class="material-symbols-outlined text-primary" data-icon="person">person</span>
+</div>
+</header>
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+<!-- Filter/Category Selector -->
+<div class="flex items-center justify-between mb-8 pb-4">
+<h2 class="text-3xl font-headline font-bold text-primary tracking-tighter">Games</h2>
+<div class="flex gap-2 bg-surface-container-highest p-1 rounded-full">
+<button class="px-4 py-1.5 rounded-full bg-primary text-on-primary font-headline text-sm font-bold shadow-[0_4px_12px_rgba(176,0,116,0.2)]">All</button>
+<button class="px-4 py-1.5 rounded-full text-on-surface-variant font-headline text-sm hover:bg-surface-variant transition-colors">Luck</button>
+<button class="px-4 py-1.5 rounded-full text-on-surface-variant font-headline text-sm hover:bg-surface-variant transition-colors">Skill</button>
+</div>
+</div>
+<!-- Luck Category -->
+<div class="mb-12 relative">
+<div class="absolute -left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-primary-container to-transparent rounded-full opacity-50"></div>
+<h3 class="text-xl font-headline font-bold text-on-surface mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container" data-icon="casino" data-weight="fill" style="font-variation-settings: 'FILL' 1;">casino</span>
+                Luck Based
+            </h3>
+<div class="grid grid-cols-3 gap-4 md:gap-6">
+<!-- Game Card: Lucky Dice -->
+<div class="bg-white rounded-3xl p-3 flex flex-col items-center text-center hover:scale-105 transition-transform cursor-pointer shadow-[0_10px_30px_rgba(73,33,54,0.04)] hover:shadow-[0_20px_40px_rgba(73,33,54,0.08)] relative group overflow-hidden">
+<div class="w-full aspect-square rounded-2xl mb-3 bg-pink-50 flex items-center justify-center relative overflow-hidden flex items-center justify-center">
+<img alt="Lucky Dice" class="w-full h-full object-contain p-1 opacity-90 group-hover:opacity-100 transition-opacity relative" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCaTjIDQ4C4sZFUFPF0ri0LP2xlWUS3b3_mpMQSWD7uhkV26R3iopEFJPTTsTHP6oaYL_-OdYb4hG6Jlwmox9acv9zciwvsFDw0Y4exrRXoParDxQXhM_0DZKrIuKAxz3gBDYgX6YQAAWTRNrmRY5o3Ky49Nb44THjw3nZv3v7NeBcAx85wWcdgZbUeEDfogjNfcSQUUAZekVO20cAdWerfMsQeeehMwwGHDnpJ4HOJ9OcMlx174XfsehEdcCuevGl9wSwFeR6dOmo"/>
+<div class="absolute top-2 right-2 bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full label-sm font-bold z-10">2-8</div>
+</div>
+<h4 class="font-headline font-bold text-lg text-primary mb-1">Lucky Dice</h4>
+<p class="text-sm text-on-surface-variant">Roll to win</p>
+</div>
+<!-- Game Card: Time Bomb -->
+<div class="bg-white rounded-3xl p-3 flex flex-col items-center text-center hover:scale-105 transition-transform cursor-pointer shadow-[0_10px_30px_rgba(73,33,54,0.04)] hover:shadow-[0_20px_40px_rgba(73,33,54,0.08)] relative group overflow-hidden">
+<div class="w-full aspect-square rounded-2xl mb-3 bg-pink-50 flex items-center justify-center relative overflow-hidden flex items-center justify-center">
+<img alt="Time Bomb" class="w-full h-full object-contain p-1 opacity-90 group-hover:opacity-100 transition-opacity relative" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1B93MQuoMHWP7n31wuIymSnBSrdoD00p2R7Liv3JCa4QJ60JH8uSinDISt3Qk5WdsdQQTEpAoR-6YxcJyqmmDra3zlugYVq78GqkMAlSFmwus_88PSl6JfE1HIVeD84ugG_z-AUf0UQGb-Zz7YGocUvdF9Yi5ydS8XbQBoUcAUKRK92dnS-ZHc_ryLJdESr2YTEG1gJbETfyPmflLOp8-V52Con9mw9_CPo9zdJHJky0M1mDQF5cVUhM1Lj4vn8gwhrQ7f8loyNc"/>
+<div class="absolute top-2 right-2 bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full label-sm font-bold z-10">2-8</div>
+</div>
+<h4 class="font-headline font-bold text-lg text-primary mb-1">Time Bomb</h4>
+<p class="text-sm text-on-surface-variant">Tick tock</p>
+</div>
+<!-- Game Card: Crocodile Teeth -->
+<div class="bg-white rounded-3xl p-3 flex flex-col items-center text-center hover:scale-105 transition-transform cursor-pointer shadow-[0_10px_30px_rgba(73,33,54,0.04)] hover:shadow-[0_20px_40px_rgba(73,33,54,0.08)] relative group overflow-hidden">
+<div class="w-full aspect-square rounded-2xl mb-3 bg-pink-50 flex items-center justify-center relative overflow-hidden flex items-center justify-center">
+<img alt="Crocodile Teeth" class="w-full h-full object-contain p-1 opacity-90 group-hover:opacity-100 transition-opacity relative" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDR2HGScxRbbq6q60prJs5ITFOo6a_CDX615NfU4ijsFxQXqrOzsxSX6CANztJLJx7fPNpHLDOgXw0bA6vDU35pOji32bHoAEzogIueC1F3rWj4laKW_g3P-EwAE7qtkiZNIUA6kuLfgIhNfjGKDAc7wqFfxL6hS0bKwYnzISbiahSePNnurr1GAHM0hXTrw4naJazRkU4LwsDU2FaGrz-xgx_tpaJhi432ZdTCWhlPXHl6BvTJMXs2l4ex-DHG1PReJgYm-UFKBa8"/>
+<div class="absolute top-2 right-2 bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full label-sm font-bold z-10">2-8</div>
+</div>
+<h4 class="font-headline font-bold text-lg text-primary mb-1">Crocodile Teeth</h4>
+<p class="text-sm text-on-surface-variant">Don't get bit</p>
+</div>
+<!-- Game Card: Fingertip Roulette -->
+<div class="bg-white rounded-3xl p-3 flex flex-col items-center text-center hover:scale-105 transition-transform cursor-pointer shadow-[0_10px_30px_rgba(73,33,54,0.04)] hover:shadow-[0_20px_40px_rgba(73,33,54,0.08)] relative group overflow-hidden">
+<div class="w-full aspect-square rounded-2xl mb-3 bg-pink-50 flex items-center justify-center relative overflow-hidden flex items-center justify-center">
+<img alt="Fingertip Roulette" class="w-full h-full object-contain p-1 opacity-90 group-hover:opacity-100 transition-opacity relative" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCn58rHpUixigkAEEH_hE8UvDiwWyswb9nvPxpLExmUbW-E98srgm9ucVdJTPKxeN7EkSDy-EWhQqoyOQsWfAz-K54JtQmxRWV-_KRUSWitjLxs-0sBSDX5xOYHdDPnseBvZj4CrfntTFglvAbIWMAa6Ghv859XaRId-QWfXXszm7OXbeOijBXlyFAZXx6mb6_1L5gU1w3rKXm6J6H_fWYlO6HqLq9JFwTuDTdorxXDIk_RqsGt-TL6pzqzw74Rg5nK9xdP5TE5FH4"/>
+<div class="absolute top-2 right-2 bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full label-sm font-bold z-10">2-5</div>
+</div>
+<h4 class="font-headline font-bold text-lg text-primary mb-1">Fingertip Roulette</h4>
+<p class="text-sm text-on-surface-variant">Take a spin</p>
+</div>
+</div>
+</div>
+<!-- Skill Category -->
+<div class="mb-12 relative">
+<div class="absolute -left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-secondary-container to-transparent rounded-full opacity-50"></div>
+<h3 class="text-xl font-headline font-bold text-on-surface mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary-container" data-icon="psychology" data-weight="fill" style="font-variation-settings: 'FILL' 1;">psychology</span>
+                Skill Based
+            </h3>
+<div class="grid grid-cols-3 gap-4 md:gap-6">
+<!-- Game Card: Shake Horse Racing -->
+<div class="bg-white rounded-3xl p-3 flex flex-col items-center text-center hover:scale-105 transition-transform cursor-pointer shadow-[0_10px_30px_rgba(73,33,54,0.04)] hover:shadow-[0_20px_40px_rgba(73,33,54,0.08)] relative group overflow-hidden">
+<div class="w-full aspect-square rounded-2xl mb-3 bg-pink-50 flex items-center justify-center relative overflow-hidden flex items-center justify-center">
+<img alt="Shake Horse Racing" class="w-full h-full object-contain p-1 opacity-90 group-hover:opacity-100 transition-opacity relative" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAea6jvgGb7BNrrhVcFn86FEA5sSHqCymMJEnWU22WVrB8hmQwD-tEfesyvuFL6DYsA2uk4cNCu2B_n63Vhtxiiy3WcFScd8VEE9HO1FJFdA3RGICVdEMs91aLWc4eho_8W4HIaGcFtLaBaST3OqvLHTDdfkHZEj2PmwbfJd0BLs9gr6REq7Qpt86mtpcmeqaGvVIEDzUVMdwtOCjVvbwL5YfZnAaR6xoHDo7OE9rjyH-u2ChskNcW-av2bqGbSaBN957hnTGVw888"/>
+<div class="absolute top-2 right-2 bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full label-sm font-bold z-10">2-8</div>
+</div>
+<h4 class="font-headline font-bold text-lg text-primary mb-1">Shake Horse Racing</h4>
+<p class="text-sm text-on-surface-variant">Fastest wins</p>
+</div>
+<!-- Game Card: Reaction Challenge -->
+<div class="bg-white rounded-3xl p-3 flex flex-col items-center text-center hover:scale-105 transition-transform cursor-pointer shadow-[0_10px_30px_rgba(73,33,54,0.04)] hover:shadow-[0_20px_40px_rgba(73,33,54,0.08)] relative group overflow-hidden">
+<div class="w-full aspect-square rounded-2xl mb-3 bg-pink-50 flex items-center justify-center relative overflow-hidden flex items-center justify-center">
+<img alt="Reaction Challenge" class="w-full h-full object-contain p-1 opacity-90 group-hover:opacity-100 transition-opacity relative" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB46FrY9hH0M772xGxZLpLuQ_J3XlLEeUp_Pl-7XfThoKngPr6QeUezniQWhxosScfgava_I_4_f3V--y-Hp13ZxkhxPd5ah7RRSHnBKzpa5eoMMwM-b59dPF66kh6PqwO46ndM-7SlStq0kl9FCl6m8UCGXfHZDWQjYsz9qyyA10flK927JPghHrjXlECNFLf-8fdceLSMAtZDSYOYLe72Jy1IL_qqg44j522Ha7eI90apqcABDusHK6do1gc9eA3Zn427arbF99o"/>
+<div class="absolute top-2 right-2 bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full label-sm font-bold z-10">2-5</div>
+</div>
+<h4 class="font-headline font-bold text-lg text-primary mb-1">Reaction Challenge</h4>
+<p class="text-sm text-on-surface-variant">Quick reflexes</p>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-white/80 backdrop-blur-2xl rounded-t-[3rem] tonal-shift-bg-surface-container shadow-[0_-10px_40px_rgba(0,0,0,0.04)] md:hidden">
+<a class="flex flex-col items-center justify-center bg-pink-50 text-pink-600 rounded-full px-5 py-2 scale-110 transition-all hover:text-pink-500 active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="sports_esports" data-weight="fill" style="font-variation-settings: 'FILL' 1;">sports_esports</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[10px] uppercase tracking-widest font-bold">Games</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 px-4 py-2 hover:text-pink-500 transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="group">group</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[10px] uppercase tracking-widest font-bold">Social</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 px-4 py-2 hover:text-pink-500 transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="local_mall">local_mall</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[10px] uppercase tracking-widest font-bold">Store</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 px-4 py-2 hover:text-pink-500 transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="person_tag">tag</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[10px] uppercase tracking-widest font-bold">Profile</span>
+</a>
+</nav>
+</body></html>
