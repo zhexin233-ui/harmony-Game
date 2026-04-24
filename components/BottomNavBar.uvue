@@ -4,22 +4,27 @@
 			v-for="item in items"
 			:key="item.id"
 			class="nav-item"
-			:class="{ active: item.active }"
 			:style="item.active ? activeStyle : inactiveStyle"
 			@tap="tapItem(item.id)"
 		>
-			<UiIcon class="nav-icon" :name="item.iconKey" :size="22" :opacity="item.active ? 1 : 0.68" />
-			<text class="nav-label" :style="item.active ? activeTextStyle : inactiveTextStyle">{{ item.label }}</text>
+			<view class="nav-content">
+				<view class="nav-icon" :class="item.visualIconClass" :style="item.active ? activeIconStyle : inactiveIconStyle">
+					<view class="shape-part shape-main"></view>
+					<view class="shape-part shape-accent"></view>
+					<view class="shape-part shape-detail"></view>
+				</view>
+				<text class="nav-label" :style="item.active ? activeTextStyle : inactiveTextStyle">{{ item.label }}</text>
+			</view>
 		</view>
 	</view>
 </template>
 
 <script setup lang="uts">
-	import { computed } from 'vue'
-	import UiIcon from '@/components/UiIcon.uvue'
+	import { computed, onMounted, ref } from 'vue'
 	import { useSettings } from '@/stores/settings'
 	import { themes } from '@/theme/tokens'
 	import { decideBottomNavAction, getBottomNavItems, type TopLevelPage } from '@/ui/navigation'
+	import { getBottomDockPadding, readWindowLayoutMetrics } from '@/ui/window-layout'
 
 	const props = defineProps<{
 		active : TopLevelPage
@@ -28,10 +33,15 @@
 	const settings = useSettings()
 	const tokens = computed(() => themes[settings.theme])
 	const items = computed(() => getBottomNavItems(props.active))
+	const windowMetrics = ref(readWindowLayoutMetrics())
 
 	const navStyle = computed(() => ({
 		backgroundColor: tokens.value.bottomNavBg,
-		boxShadow: tokens.value.shadowSoft
+		boxShadow: tokens.value.shadowSoft,
+		paddingTop: '8px',
+		paddingRight: '10px',
+		paddingBottom: getBottomDockPadding(18, windowMetrics.value),
+		paddingLeft: '10px'
 	}))
 	const activeStyle = computed(() => ({
 		backgroundColor: tokens.value.navActiveBg
@@ -39,12 +49,24 @@
 	const inactiveStyle = computed(() => ({
 		backgroundColor: 'transparent'
 	}))
+	const activeIconStyle = computed(() => ({
+		opacity: 1,
+		borderColor: tokens.value.navActiveText
+	}))
+	const inactiveIconStyle = computed(() => ({
+		opacity: 0.68,
+		borderColor: tokens.value.navInactiveText
+	}))
 	const activeTextStyle = computed(() => ({
 		color: tokens.value.navActiveText
 	}))
 	const inactiveTextStyle = computed(() => ({
 		color: tokens.value.navInactiveText
 	}))
+
+	onMounted(() => {
+		windowMetrics.value = readWindowLayoutMetrics()
+	})
 
 	function tapItem(id : string) {
 		const action = decideBottomNavAction(id, props.active)
@@ -64,14 +86,15 @@
 		right: 0;
 		bottom: 0;
 		z-index: 50;
+		overflow: visible;
 		flex-direction: row;
 		align-items: center;
 		justify-content: space-around;
-		padding: 8px 10px 18px 10px;
 		border-top-left-radius: 34px;
 		border-top-right-radius: 34px;
 	}
 	.nav-item {
+		position: relative;
 		min-width: 56px;
 		min-height: 54px;
 		border-radius: 28px;
@@ -79,11 +102,97 @@
 		justify-content: center;
 		padding: 6px 8px;
 	}
-	.nav-item.active {
-		transform: translateY(-8px);
+	.nav-content {
+		align-items: center;
+		justify-content: center;
 	}
 	.nav-icon {
+		position: relative;
+		width: 22px;
+		height: 22px;
 		margin-bottom: 2px;
+	}
+	.shape-part {
+		position: absolute;
+		border-color: inherit;
+	}
+	.home-shape .shape-main {
+		left: 5px;
+		top: 9px;
+		width: 12px;
+		height: 10px;
+		border-width: 2px;
+		border-style: solid;
+		border-radius: 2px;
+	}
+	.home-shape .shape-accent {
+		left: 4px;
+		top: 3px;
+		width: 13px;
+		height: 13px;
+		border-left-width: 2px;
+		border-top-width: 2px;
+		border-left-style: solid;
+		border-top-style: solid;
+		transform: rotate(45deg);
+	}
+	.home-shape .shape-detail {
+		left: 10px;
+		top: 13px;
+		width: 4px;
+		height: 6px;
+		border-width: 2px;
+		border-style: solid;
+		border-bottom-width: 0;
+	}
+	.punishment-shape .shape-main {
+		left: 8px;
+		top: 1px;
+		width: 7px;
+		height: 19px;
+		background-color: #facc15;
+		border-width: 2px;
+		border-style: solid;
+		transform: skewX(-18deg);
+	}
+	.punishment-shape .shape-accent {
+		left: 4px;
+		top: 9px;
+		width: 14px;
+		height: 2px;
+		background-color: #facc15;
+		border-width: 2px;
+		border-style: solid;
+		transform: skewX(-18deg);
+	}
+	.punishment-shape .shape-detail {
+		display: none;
+	}
+	.settings-shape .shape-main {
+		left: 5px;
+		top: 5px;
+		width: 12px;
+		height: 12px;
+		border-width: 2px;
+		border-style: solid;
+		border-radius: 8px;
+	}
+	.settings-shape .shape-accent {
+		left: 9px;
+		top: 9px;
+		width: 4px;
+		height: 4px;
+		border-width: 2px;
+		border-style: solid;
+		border-radius: 4px;
+	}
+	.settings-shape .shape-detail {
+		left: 10px;
+		top: 0;
+		width: 2px;
+		height: 22px;
+		border-left-width: 2px;
+		border-left-style: solid;
 	}
 	.nav-label {
 		font-size: 11px;

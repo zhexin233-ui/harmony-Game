@@ -15,6 +15,7 @@ export type BottomNavItem = {
 
 export type BottomNavRenderItem = BottomNavItem & {
   active: boolean
+  visualIconClass: string
 }
 
 export type BottomNavAction =
@@ -30,10 +31,21 @@ export const BOTTOM_NAV_ITEMS: BottomNavItem[] = [
   { id: 'settings', label: '设置', iconKey: 'nav-settings', page: 'settings', route: '/pages/settings/index' }
 ]
 
+const BOTTOM_NAV_VISUAL_ICON_CLASSES: Record<BottomNavItemId, string> = {
+  home: 'home-shape',
+  punishment: 'punishment-shape',
+  settings: 'settings-shape'
+}
+
+export function getBottomNavVisualIconClass(id: BottomNavItemId): string {
+  return BOTTOM_NAV_VISUAL_ICON_CLASSES[id]
+}
+
 export function getBottomNavItems(current?: TopLevelPage): BottomNavRenderItem[] {
   return BOTTOM_NAV_ITEMS.map((item) => ({
     ...item,
-    active: item.page === current
+    active: item.page === current,
+    visualIconClass: getBottomNavVisualIconClass(item.id)
   }))
 }
 

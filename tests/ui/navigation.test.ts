@@ -1,10 +1,15 @@
 import { describe, it, expect } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import {
   BOTTOM_NAV_ITEMS,
   decideBottomNavAction,
   getBottomNavItems,
+  getBottomNavVisualIconClass,
   type TopLevelPage
 } from '@/ui/navigation'
+
+const bottomNavSource = () => readFileSync(resolve(process.cwd(), 'components/BottomNavBar.uvue'), 'utf8')
 
 describe('bottom navigation', () => {
   it('只包含首页、惩罚、设置三项入口', () => {
@@ -46,5 +51,18 @@ describe('bottom navigation', () => {
       type: 'toast',
       title: '功能建设中，稍后开放'
     })
+  })
+
+  it('底栏使用 CSS 形状图标规避鸿蒙真机 image 图层丢失', () => {
+    expect(getBottomNavVisualIconClass('home')).toBe('home-shape')
+    expect(getBottomNavVisualIconClass('punishment')).toBe('punishment-shape')
+    expect(getBottomNavVisualIconClass('settings')).toBe('settings-shape')
+  })
+
+  it('底栏组件不使用 image 渲染图标', () => {
+    const source = bottomNavSource()
+
+    expect(source).not.toContain('<image')
+    expect(source).toContain('shape-part shape-main')
   })
 })
