@@ -4,10 +4,17 @@ import { defaultRandom, randomInt } from '../random'
 
 export type WheelState = 'collecting' | 'spinning' | 'selected'
 
+export type FingerTouchPoint = {
+  id: number
+  x: number
+  y: number
+}
+
 export type WheelSnapshot = {
   state: WheelState
   playerCount: number
   fingerIds: number[]
+  fingerTouches: FingerTouchPoint[]
   spinElapsedMs: number
   spinDurationMs: number
   selectedFingerIndex?: number
@@ -16,7 +23,8 @@ export type WheelSnapshot = {
 
 export type WheelGame = {
   getSnapshot(): WheelSnapshot
-  addFinger(id: number): void
+  addFinger(id: number, point?: { x: number; y: number }): void
+  moveFinger(id: number, point: { x: number; y: number }): void
   removeFinger(id: number): void
   tick(deltaMs: number): void
 }
@@ -39,10 +47,18 @@ export function createWheelGame(opts: {
 
   let state: WheelState = 'collecting'
   const fingerIds: number[] = []
+  const fingerTouches = new Map<number, { x: number; y: number }>()
   let spinElapsedMs = 0
   let spinDurationMs = 0
   let selectedFingerIndex: number | undefined
   let result: GameResult | undefined
+
+  function copyFingerTouches(): FingerTouchPoint[] {
+    return fingerIds.map((id) => {
+      const point = fingerTouches.get(id) ?? { x: 0, y: 0 }
+      return { id, x: point.x, y: point.y }
+    })
+  }
 
   function beginSpin(): void {
     state = 'spinning'
@@ -57,23 +73,33 @@ export function createWheelGame(opts: {
         state,
         playerCount: opts.playerCount,
         fingerIds: [...fingerIds],
+        fingerTouches: copyFingerTouches(),
         spinElapsedMs,
         spinDurationMs,
         selectedFingerIndex,
         result
       }
     },
-    addFinger(id: number) {
+    addFinger(id: number, point?: { x: number; y: number }) {
       if (state !== 'collecting') return
       if (fingerIds.includes(id)) return
       if (fingerIds.length >= opts.playerCount) return
       fingerIds.push(id)
+      fingerTouches.set(id, { x: point?.x ?? 0, y: point?.y ?? 0 })
       if (fingerIds.length === opts.playerCount) beginSpin()
+    },
+    moveFinger(id: number, point: { x: number; y: number }) {
+      if (state !== 'collecting') return
+      if (!fingerIds.includes(id)) return
+      fingerTouches.set(id, { x: point.x, y: point.y })
     },
     removeFinger(id: number) {
       if (state !== 'collecting') return
       const idx = fingerIds.indexOf(id)
-      if (idx !== -1) fingerIds.splice(idx, 1)
+      if (idx !== -1) {
+        fingerIds.splice(idx, 1)
+        fingerTouches.delete(id)
+      }
     },
     tick(deltaMs: number) {
       if (state !== 'spinning') return

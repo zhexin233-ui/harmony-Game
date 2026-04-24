@@ -21,7 +21,7 @@ export type CrocodileGame = {
 }
 
 function toothCountFor(playerCount: number): number {
-  return (playerCount - 1) * 2
+  return Math.max(16, (playerCount - 1) * 2)
 }
 
 export function createCrocodileGame(opts: {

@@ -26,13 +26,35 @@
 			</text>
 		</view>
 
-		<AppButton
-			v-if="state === 'selected'"
-			label="查看结果"
-			variant="primary"
-			@tap="goResult"
-		/>
-		<AppButton label="返回大厅" variant="ghost" @tap="onExit" />
+		<view class="action-layer">
+			<AppButton
+				v-if="state === 'selected'"
+				label="查看结果"
+				variant="primary"
+				@tap="goResult"
+			/>
+			<AppButton label="返回大厅" variant="ghost" @tap="onExit" />
+		</view>
+
+		<view
+			v-if="(snap?.fingerTouches?.length ?? 0) > 0"
+			class="finger-layer"
+			@touchstart="onTouchStart"
+			@touchmove="onTouchMove"
+			@touchend="onTouchEnd"
+			@touchcancel="onTouchEnd"
+		>
+			<view
+				v-for="(point, index) in snap?.fingerTouches ?? []"
+				:key="point.id"
+				class="finger-marker"
+				:class="{ active: isFingerActive(index), selected: isFingerSelected(index) }"
+				:style="fingerMarkerStyle(index, point.x, point.y)"
+			>
+				<view class="finger-glow" :style="fingerGlowStyle(index)"></view>
+				<text class="finger-label">{{ index + 1 }}</text>
+			</view>
+		</view>
 
 		<GamePausedOverlay
 			:visible="paused"
@@ -67,8 +89,21 @@
 	const snap = ref<WheelSnapshot | null>(null)
 	const paused = ref(false)
 
+	type TouchPointInput = { x: number; y: number }
+	type TouchLike = {
+		identifier : number
+		clientX ?: number
+		clientY ?: number
+		pageX ?: number
+		pageY ?: number
+		x ?: number
+		y ?: number
+	}
+
 	let tickTimer : number | null = null
 	let lastTickAt = 0
+	const wheelScanStepMs = 150
+	const fingerColors = ['#26D6FF', '#76E06B', '#FF5DA2', '#FFD166', '#FF8A3D']
 
 	const state = computed(() => snap.value?.state ?? 'collecting')
 
@@ -82,6 +117,56 @@
 		snap.value = game.value!.getSnapshot()
 	}
 
+	function safeCoordinate(value : number | undefined) : number {
+		if (typeof value !== 'number') return 0
+		if (!Number.isFinite(value)) return 0
+		return value
+	}
+
+	function touchPointOf(t : TouchLike) : TouchPointInput {
+		return {
+			x: safeCoordinate(t.clientX ?? t.pageX ?? t.x),
+			y: safeCoordinate(t.clientY ?? t.pageY ?? t.y)
+		}
+	}
+
+	function fingerColor(index : number) : string {
+		return fingerColors[index % fingerColors.length]
+	}
+
+	function activeFingerIndex() : number {
+		const s = snap.value
+		const count = s?.fingerTouches?.length ?? 0
+		if (s == null || count <= 0) return -1
+		if (s.state === 'selected') return s.selectedFingerIndex ?? -1
+		if (s.state !== 'spinning') return -1
+		return Math.floor(s.spinElapsedMs / wheelScanStepMs) % count
+	}
+
+	function isFingerActive(index : number) : boolean {
+		return activeFingerIndex() === index
+	}
+
+	function isFingerSelected(index : number) : boolean {
+		const s = snap.value
+		return s?.state === 'selected' && s.selectedFingerIndex === index
+	}
+
+	function fingerMarkerStyle(index : number, x : number, y : number) {
+		const color = fingerColor(index)
+		const active = isFingerActive(index)
+		return {
+			left: `${x}px`,
+			top: `${y}px`,
+			backgroundColor: color,
+			boxShadow: active ? `0 0 28px ${color}` : '0 10px 26px rgba(0,0,0,0.25)'
+		}
+	}
+
+	function fingerGlowStyle(index : number) {
+		return { borderColor: fingerColor(index) }
+	}
+
 	function init() {
 		const raw = session.playerCount > 0 ? session.playerCount : 2
 		const count = Math.min(5, Math.max(2, raw))
@@ -92,8 +177,8 @@
 	function onTouchStart(e : TouchEvent) {
 		if (snap.value?.state !== 'collecting') return
 		for (let i = 0; i < e.changedTouches.length; i++) {
-			const t = e.changedTouches[i]
-			game.value?.addFinger(t.identifier as number)
+			const t = e.changedTouches[i] as TouchLike
+			game.value?.addFinger(t.identifier as number, touchPointOf(t))
 		}
 		update()
 		const s = snap.value!
@@ -104,8 +189,13 @@
 		}
 	}
 
-	function onTouchMove(_e : TouchEvent) {
-		// 轮盘阶段不需要位置；保留 handler 以吃掉事件
+	function onTouchMove(e : TouchEvent) {
+		if (snap.value?.state !== 'collecting') return
+		for (let i = 0; i < e.changedTouches.length; i++) {
+			const t = e.changedTouches[i] as TouchLike
+			game.value?.moveFinger(t.identifier as number, touchPointOf(t))
+		}
+		update()
 	}
 
 	function onTouchEnd(e : TouchEvent) {
@@ -192,6 +282,8 @@
 	.container {
 		padding: 20px;
 		align-items: center;
+		position: relative;
+		overflow: hidden;
 	}
 	.big { font-size: 64px; }
 	.title {
@@ -230,5 +322,59 @@
 		font-size: 20px;
 		font-weight: bold;
 		text-align: center;
+	}
+	.action-layer {
+		position: relative;
+		z-index: 30;
+		align-items: center;
+	}
+	.finger-layer {
+		position: absolute;
+		left: 0;
+		top: 0;
+		width: 100%;
+		height: 100%;
+		z-index: 20;
+		pointer-events: none;
+	}
+	.finger-marker {
+		position: absolute;
+		width: 54px;
+		height: 54px;
+		margin-left: -27px;
+		margin-top: -27px;
+		border-radius: 27px;
+		align-items: center;
+		justify-content: center;
+		border-width: 2px;
+		border-style: solid;
+		border-color: rgba(255,255,255,0.78);
+		z-index: 21;
+	}
+	.finger-marker.active {
+		transform: scale(1.08);
+	}
+	.finger-marker.selected {
+		transform: scale(1.16);
+	}
+	.finger-glow {
+		position: absolute;
+		left: -8px;
+		top: -8px;
+		width: 66px;
+		height: 66px;
+		border-radius: 33px;
+		border-width: 3px;
+		border-style: solid;
+		opacity: 0;
+	}
+	.finger-marker.active .finger-glow,
+	.finger-marker.selected .finger-glow {
+		opacity: 1;
+	}
+	.finger-label {
+		font-size: 20px;
+		font-weight: 900;
+		color: #06131c;
 	}
 </style>

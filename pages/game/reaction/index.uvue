@@ -44,7 +44,29 @@
 			<AppButton label="查看结果" variant="primary" @tap="goResult" />
 		</view>
 
-		<AppButton v-if="state !== 'signal'" label="返回大厅" variant="ghost" @tap="onExit" />
+		<view class="action-layer">
+			<AppButton v-if="state !== 'signal'" label="返回大厅" variant="ghost" @tap="onExit" />
+		</view>
+
+		<view
+			v-if="(snap?.fingerTouches?.length ?? 0) > 0"
+			class="finger-layer"
+			@touchstart="onTouchStart"
+			@touchmove="onTouchMove"
+			@touchend="onTouchEnd"
+			@touchcancel="onTouchEnd"
+		>
+			<view
+				v-for="(point, index) in snap?.fingerTouches ?? []"
+				:key="point.id"
+				class="finger-marker"
+				:class="{ released: isFingerReleased(point.id), loser: isFingerLoser(index) }"
+				:style="fingerMarkerStyle(index, point.id, point.x, point.y)"
+			>
+				<view class="finger-glow" :style="fingerGlowStyle(index)"></view>
+				<text class="finger-label">{{ index + 1 }}</text>
+			</view>
+		</view>
 
 		<GamePausedOverlay
 			:visible="paused"
@@ -84,8 +106,20 @@
 	const paused = ref(false)
 	const falseStart = ref(false)
 
+	type TouchPointInput = { x: number; y: number }
+	type TouchLike = {
+		identifier : number
+		clientX ?: number
+		clientY ?: number
+		pageX ?: number
+		pageY ?: number
+		x ?: number
+		y ?: number
+	}
+
 	let tickTimer : number | null = null
 	let lastTickAt = 0
+	const fingerColors = ['#76E06B', '#26D6FF', '#FF5DA2', '#FFD166', '#FF8A3D']
 
 	const state = computed(() => snap.value?.state ?? 'collecting')
 
@@ -106,6 +140,49 @@
 		snap.value = game.value!.getSnapshot()
 	}
 
+	function safeCoordinate(value : number | undefined) : number {
+		if (typeof value !== 'number') return 0
+		if (!Number.isFinite(value)) return 0
+		return value
+	}
+
+	function touchPointOf(t : TouchLike) : TouchPointInput {
+		return {
+			x: safeCoordinate(t.clientX ?? t.pageX ?? t.x),
+			y: safeCoordinate(t.clientY ?? t.pageY ?? t.y)
+		}
+	}
+
+	function fingerColor(index : number) : string {
+		return fingerColors[index % fingerColors.length]
+	}
+
+	function isFingerReleased(id : number) : boolean {
+		return snap.value?.releasedIds?.includes(id) ?? false
+	}
+
+	function isFingerLoser(index : number) : boolean {
+		const s = snap.value
+		return s?.state === 'resolved' && s.result?.loser === index
+	}
+
+	function fingerMarkerStyle(index : number, id : number, x : number, y : number) {
+		const loser = isFingerLoser(index)
+		const color = loser ? tokens.value.danger : fingerColor(index)
+		const released = isFingerReleased(id)
+		return {
+			left: `${x}px`,
+			top: `${y}px`,
+			backgroundColor: color,
+			opacity: released && !loser ? 0.38 : 1,
+			boxShadow: loser ? `0 0 30px ${color}` : '0 10px 26px rgba(0,0,0,0.25)'
+		}
+	}
+
+	function fingerGlowStyle(index : number) {
+		return { borderColor: isFingerLoser(index) ? tokens.value.danger : fingerColor(index) }
+	}
+
 	function init() {
 		falseStart.value = false
 		const raw = session.playerCount > 0 ? session.playerCount : 2
@@ -118,8 +195,8 @@
 	function onTouchStart(e : TouchEvent) {
 		if (snap.value?.state !== 'collecting') return
 		for (let i = 0; i < e.changedTouches.length; i++) {
-			const t = e.changedTouches[i]
-			game.value?.addFinger(t.identifier as number)
+			const t = e.changedTouches[i] as TouchLike
+			game.value?.addFinger(t.identifier as number, touchPointOf(t))
 		}
 		update()
 		if (snap.value?.state === 'armed') {
@@ -129,8 +206,14 @@
 		}
 	}
 
-	function onTouchMove(_e : TouchEvent) {
-		// 只关心触发边缘，不处理 move
+	function onTouchMove(e : TouchEvent) {
+		const currentState = snap.value?.state
+		if (currentState !== 'collecting' && currentState !== 'armed' && currentState !== 'signal') return
+		for (let i = 0; i < e.changedTouches.length; i++) {
+			const t = e.changedTouches[i] as TouchLike
+			game.value?.moveFinger(t.identifier as number, touchPointOf(t))
+		}
+		update()
 	}
 
 	function onTouchEnd(e : TouchEvent) {
@@ -224,6 +307,8 @@
 		padding: 20px;
 		align-items: center;
 		justify-content: center;
+		position: relative;
+		overflow: hidden;
 	}
 	.title-row {
 		flex-direction: row;
@@ -235,7 +320,11 @@
 		font-weight: bold;
 		margin-left: 10px;
 	}
-	.hint-box { align-items: center; }
+	.hint-box {
+		position: relative;
+		z-index: 30;
+		align-items: center;
+	}
 	.hint-row {
 		flex-direction: row;
 		align-items: center;
@@ -259,5 +348,58 @@
 		font-weight: bold;
 		margin: 16px 0;
 		text-align: center;
+	}
+	.action-layer {
+		position: relative;
+		z-index: 30;
+		align-items: center;
+	}
+	.finger-layer {
+		position: absolute;
+		left: 0;
+		top: 0;
+		width: 100%;
+		height: 100%;
+		z-index: 20;
+		pointer-events: none;
+	}
+	.finger-marker {
+		position: absolute;
+		width: 54px;
+		height: 54px;
+		margin-left: -27px;
+		margin-top: -27px;
+		border-radius: 27px;
+		align-items: center;
+		justify-content: center;
+		border-width: 2px;
+		border-style: solid;
+		border-color: rgba(255,255,255,0.78);
+		z-index: 21;
+	}
+	.finger-marker.loser {
+		transform: scale(1.16);
+	}
+	.finger-glow {
+		position: absolute;
+		left: -8px;
+		top: -8px;
+		width: 66px;
+		height: 66px;
+		border-radius: 33px;
+		border-width: 3px;
+		border-style: solid;
+		opacity: 0.42;
+	}
+	.finger-marker.released .finger-glow {
+		opacity: 0.12;
+	}
+	.finger-marker.loser .finger-glow {
+		opacity: 1;
+	}
+	.finger-label {
+		font-size: 20px;
+		font-weight: 900;
+		color: #06131c;
 	}
 </style>

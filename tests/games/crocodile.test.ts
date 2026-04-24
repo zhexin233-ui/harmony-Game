@@ -8,9 +8,10 @@ describe('createCrocodileGame', () => {
     expect(() => createCrocodileGame({ playerCount: 17 })).toThrow()
   })
 
-  it('牙齿数按（人数 - 1）* 2 计算', () => {
-    expect(createCrocodileGame({ playerCount: 2, random: () => 0 }).getSnapshot().totalTeeth).toBe(2)
-    expect(createCrocodileGame({ playerCount: 4, random: () => 0 }).getSnapshot().totalTeeth).toBe(6)
+  it('牙齿数至少 16 颗，超过后按（人数 - 1）* 2 计算', () => {
+    expect(createCrocodileGame({ playerCount: 2, random: () => 0 }).getSnapshot().totalTeeth).toBe(16)
+    expect(createCrocodileGame({ playerCount: 4, random: () => 0 }).getSnapshot().totalTeeth).toBe(16)
+    expect(createCrocodileGame({ playerCount: 9, random: () => 0 }).getSnapshot().totalTeeth).toBe(16)
     expect(createCrocodileGame({ playerCount: 16, random: () => 0 }).getSnapshot().totalTeeth).toBe(30)
   })
 
@@ -30,7 +31,7 @@ describe('createCrocodileGame', () => {
 
   it('random=0.99 时陷阱牙索引为 totalTeeth-1', () => {
     const g = createCrocodileGame({ playerCount: 4, random: () => 0.99 })
-    expect(g.getSnapshot().trappedTooth).toBe(5)
+    expect(g.getSnapshot().trappedTooth).toBe(15)
   })
 
   it('start 进入 playing', () => {

@@ -9,7 +9,47 @@ describe('createReactionGame', () => {
 
   it('初始 collecting', () => {
     const g = createReactionGame({ playerCount: 3 })
-    expect(g.getSnapshot().state).toBe('collecting')
+    const s = g.getSnapshot()
+    expect(s.state).toBe('collecting')
+    expect(s.fingerTouches).toEqual([])
+  })
+
+  it('记录每根手指的触点坐标', () => {
+    const g = createReactionGame({ playerCount: 3 })
+    g.addFinger(10, { x: 42, y: 84 })
+    g.addFinger(11, { x: 128, y: 256 })
+    expect(g.getSnapshot().fingerTouches).toEqual([
+      { id: 10, x: 42, y: 84 },
+      { id: 11, x: 128, y: 256 }
+    ])
+  })
+
+  it('collecting 阶段移动手指会更新触点坐标', () => {
+    const g = createReactionGame({ playerCount: 3 })
+    g.addFinger(10, { x: 42, y: 84 })
+    g.moveFinger(10, { x: 60, y: 96 })
+    expect(g.getSnapshot().fingerTouches).toEqual([{ id: 10, x: 60, y: 96 }])
+  })
+
+  it('armed 阶段移动手指仍会更新触点坐标', () => {
+    const g = createReactionGame({ playerCount: 2, random: () => 0 })
+    g.addFinger(10, { x: 10, y: 20 }); g.addFinger(11, { x: 30, y: 40 })
+    g.moveFinger(10, { x: 100, y: 200 })
+    expect(g.getSnapshot().fingerTouches).toEqual([
+      { id: 10, x: 100, y: 200 },
+      { id: 11, x: 30, y: 40 }
+    ])
+  })
+
+  it('signal 阶段移动手指仍会更新触点坐标', () => {
+    const g = createReactionGame({ playerCount: 2, random: () => 0 })
+    g.addFinger(10, { x: 10, y: 20 }); g.addFinger(11, { x: 30, y: 40 })
+    g.tick(3000)
+    g.moveFinger(11, { x: 120, y: 220 })
+    expect(g.getSnapshot().fingerTouches).toEqual([
+      { id: 10, x: 10, y: 20 },
+      { id: 11, x: 120, y: 220 }
+    ])
   })
 
   it('到齐进入 armed 并确定 armedDelayMs', () => {
@@ -24,11 +64,12 @@ describe('createReactionGame', () => {
 
   it('collecting 阶段抬手只移除手指，不判负', () => {
     const g = createReactionGame({ playerCount: 3 })
-    g.addFinger(10); g.addFinger(11)
+    g.addFinger(10, { x: 10, y: 20 }); g.addFinger(11, { x: 30, y: 40 })
     g.removeFinger(10)
     const s = g.getSnapshot()
     expect(s.state).toBe('collecting')
     expect(s.fingerIds).toEqual([11])
+    expect(s.fingerTouches).toEqual([{ id: 11, x: 30, y: 40 }])
   })
 
   it('armed 阶段抬手 → 抢跑立输', () => {
@@ -117,6 +158,15 @@ describe('createReactionGame', () => {
     const g = createReactionGame({ playerCount: 3 })
     g.addFinger(10); g.addFinger(10)
     expect(g.getSnapshot().fingerIds).toEqual([10])
+  })
+
+  it('fingerTouches 返回拷贝', () => {
+    const g = createReactionGame({ playerCount: 3 })
+    g.addFinger(10, { x: 42, y: 84 })
+    const s = g.getSnapshot()
+    s.fingerTouches.push({ id: 99, x: 1, y: 2 })
+    s.fingerTouches[0].x = 999
+    expect(g.getSnapshot().fingerTouches).toEqual([{ id: 10, x: 42, y: 84 }])
   })
 
   it('负 delta 被忽略', () => {

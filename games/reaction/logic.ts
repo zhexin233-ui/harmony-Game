@@ -4,10 +4,17 @@ import { defaultRandom, randomInt } from '../random'
 
 export type ReactionState = 'collecting' | 'armed' | 'signal' | 'resolved'
 
+export type FingerTouchPoint = {
+  id: number
+  x: number
+  y: number
+}
+
 export type ReactionSnapshot = {
   state: ReactionState
   playerCount: number
   fingerIds: number[]
+  fingerTouches: FingerTouchPoint[]
   armedElapsedMs: number
   armedDelayMs: number
   signalElapsedMs: number
@@ -17,7 +24,8 @@ export type ReactionSnapshot = {
 
 export type ReactionGame = {
   getSnapshot(): ReactionSnapshot
-  addFinger(id: number): void
+  addFinger(id: number, point?: { x: number; y: number }): void
+  moveFinger(id: number, point: { x: number; y: number }): void
   removeFinger(id: number): void
   tick(deltaMs: number): void
 }
@@ -40,6 +48,7 @@ export function createReactionGame(opts: {
 
   let state: ReactionState = 'collecting'
   const fingerIds: number[] = []
+  const fingerTouches = new Map<number, { x: number; y: number }>()
   const releasedIds: number[] = []
   let armedElapsedMs = 0
   let armedDelayMs = 0
@@ -56,12 +65,20 @@ export function createReactionGame(opts: {
     return fingerIds.indexOf(id)
   }
 
+  function copyFingerTouches(): FingerTouchPoint[] {
+    return fingerIds.map((id) => {
+      const point = fingerTouches.get(id) ?? { x: 0, y: 0 }
+      return { id, x: point.x, y: point.y }
+    })
+  }
+
   return {
     getSnapshot() {
       return {
         state,
         playerCount: opts.playerCount,
         fingerIds: [...fingerIds],
+        fingerTouches: copyFingerTouches(),
         armedElapsedMs,
         armedDelayMs,
         signalElapsedMs,
@@ -69,17 +86,26 @@ export function createReactionGame(opts: {
         result
       }
     },
-    addFinger(id: number) {
+    addFinger(id: number, point?: { x: number; y: number }) {
       if (state !== 'collecting') return
       if (fingerIds.includes(id)) return
       if (fingerIds.length >= opts.playerCount) return
       fingerIds.push(id)
+      fingerTouches.set(id, { x: point?.x ?? 0, y: point?.y ?? 0 })
       if (fingerIds.length === opts.playerCount) enterArmed()
+    },
+    moveFinger(id: number, point: { x: number; y: number }) {
+      if (state === 'resolved') return
+      if (!fingerIds.includes(id)) return
+      fingerTouches.set(id, { x: point.x, y: point.y })
     },
     removeFinger(id: number) {
       if (state === 'collecting') {
         const idx = fingerIds.indexOf(id)
-        if (idx !== -1) fingerIds.splice(idx, 1)
+        if (idx !== -1) {
+          fingerIds.splice(idx, 1)
+          fingerTouches.delete(id)
+        }
         return
       }
       if (state === 'armed') {
