@@ -63,10 +63,12 @@
 	import { vibrateShort, vibrateLong } from '@/native/vibrator'
 	import { keepAwake, releaseAwake } from '@/native/screen'
 	import { GAME_SOUNDS } from '@/utils/game-sounds'
+	import { getGameViewportStyle, readWindowLayoutMetrics } from '@/ui/window-layout'
 
 	const session = useSession()
 	const settings = useSettings()
 	const tokens = computed(() => themes[settings.theme])
+	const windowMetrics = ref(readWindowLayoutMetrics())
 	const game = ref<HorseRaceGame | null>(null)
 	const snap = ref<HorseRaceSnapshot | null>(null)
 	const paused = ref(false)
@@ -90,7 +92,7 @@
 		return Math.ceil(remain / 1000)
 	})
 
-	const containerStyle = computed(() => ({ backgroundColor: tokens.value.bg }))
+	const containerStyle = computed(() => getGameViewportStyle(tokens.value.bg, windowMetrics.value))
 	const countStyle = computed(() => ({ color: tokens.value.primary }))
 	const trophyStyle = computed(() => ({ color: tokens.value.success }))
 	const skullStyle = computed(() => ({ color: tokens.value.danger }))
@@ -227,6 +229,7 @@
 	}
 
 	onLoad(() => {
+		windowMetrics.value = readWindowLayoutMetrics()
 		preload(GAME_SOUNDS)
 		keepAwake()
 		init()
@@ -253,7 +256,6 @@
 <style>
 	.container {
 		padding: 24px 20px;
-		min-height: 100vh;
 		align-items: center;
 	}
 	.title {

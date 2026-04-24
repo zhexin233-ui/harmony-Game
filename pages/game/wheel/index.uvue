@@ -57,10 +57,12 @@
 	import { vibrateShort, vibrateLong } from '@/native/vibrator'
 	import { keepAwake, releaseAwake } from '@/native/screen'
 	import { GAME_SOUNDS } from '@/utils/game-sounds'
+	import { getGameViewportStyle, readWindowLayoutMetrics } from '@/ui/window-layout'
 
 	const session = useSession()
 	const settings = useSettings()
 	const tokens = computed(() => themes[settings.theme])
+	const windowMetrics = ref(readWindowLayoutMetrics())
 	const game = ref<WheelGame | null>(null)
 	const snap = ref<WheelSnapshot | null>(null)
 	const paused = ref(false)
@@ -70,7 +72,7 @@
 
 	const state = computed(() => snap.value?.state ?? 'collecting')
 
-	const containerStyle = computed(() => ({ backgroundColor: tokens.value.bg }))
+	const containerStyle = computed(() => getGameViewportStyle(tokens.value.bg, windowMetrics.value))
 	const wheelBgStyle = computed(() => ({ backgroundColor: tokens.value.bgEnd }))
 	const spinHintStyle = computed(() => ({ color: tokens.value.primary }))
 	const resultHintStyle = computed(() => ({ color: tokens.value.primary }))
@@ -167,6 +169,7 @@
 	}
 
 	onLoad(() => {
+		windowMetrics.value = readWindowLayoutMetrics()
 		preload(GAME_SOUNDS)
 		keepAwake()
 		init()
@@ -188,7 +191,6 @@
 <style>
 	.container {
 		padding: 20px;
-		min-height: 100vh;
 		align-items: center;
 	}
 	.big { font-size: 64px; }

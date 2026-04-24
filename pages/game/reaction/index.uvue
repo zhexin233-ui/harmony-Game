@@ -73,10 +73,12 @@
 	import { vibrateShort, vibrateLong } from '@/native/vibrator'
 	import { keepAwake, releaseAwake } from '@/native/screen'
 	import { GAME_SOUNDS } from '@/utils/game-sounds'
+	import { getGameViewportStyle, readWindowLayoutMetrics } from '@/ui/window-layout'
 
 	const session = useSession()
 	const settings = useSettings()
 	const tokens = computed(() => themes[settings.theme])
+	const windowMetrics = ref(readWindowLayoutMetrics())
 	const game = ref<ReactionGame | null>(null)
 	const snap = ref<ReactionSnapshot | null>(null)
 	const paused = ref(false)
@@ -89,11 +91,11 @@
 
 	const containerStyle = computed(() => {
 		const st = state.value
-		if (falseStart.value)       return { backgroundColor: tokens.value.urgent }
-		if (st === 'signal')        return { backgroundColor: tokens.value.signalBg }
-		if (st === 'armed')         return { backgroundColor: tokens.value.armedBg }
-		if (st === 'resolved')      return { backgroundColor: tokens.value.bgEnd }
-		return { backgroundColor: tokens.value.bg }
+		if (falseStart.value)       return getGameViewportStyle(tokens.value.urgent, windowMetrics.value)
+		if (st === 'signal')        return getGameViewportStyle(tokens.value.signalBg, windowMetrics.value)
+		if (st === 'armed')         return getGameViewportStyle(tokens.value.armedBg, windowMetrics.value)
+		if (st === 'resolved')      return getGameViewportStyle(tokens.value.bgEnd, windowMetrics.value)
+		return getGameViewportStyle(tokens.value.bg, windowMetrics.value)
 	})
 	const bigHintStyle = computed(() => ({ color: tokens.value.text }))
 	const smallHintStyle = computed(() => ({ color: tokens.value.textMuted }))
@@ -198,6 +200,7 @@
 	}
 
 	onLoad(() => {
+		windowMetrics.value = readWindowLayoutMetrics()
 		preload(GAME_SOUNDS)
 		keepAwake()
 		init()
@@ -219,7 +222,6 @@
 <style>
 	.container {
 		padding: 20px;
-		min-height: 100vh;
 		align-items: center;
 		justify-content: center;
 	}

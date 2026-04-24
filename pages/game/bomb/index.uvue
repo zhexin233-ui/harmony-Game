@@ -47,10 +47,12 @@
 	import { vibrateShort, vibrateLong } from '@/native/vibrator'
 	import { keepAwake, releaseAwake } from '@/native/screen'
 	import { GAME_SOUNDS } from '@/utils/game-sounds'
+	import { getGameViewportStyle, readWindowLayoutMetrics } from '@/ui/window-layout'
 
 	const session = useSession()
 	const settings = useSettings()
 	const tokens = computed(() => themes[settings.theme])
+	const windowMetrics = ref(readWindowLayoutMetrics())
 	const game = ref<BombGame | null>(null)
 	const snap = ref<BombSnapshot | null>(null)
 	const paused = ref(false)
@@ -74,7 +76,7 @@
 		const bg = level >= 2 ? tokens.value.urgent
 			: level === 1 ? tokens.value.warn
 				: tokens.value.bg
-		return { backgroundColor: bg }
+		return getGameViewportStyle(bg, windowMetrics.value)
 	})
 	const boomStyle = computed(() => ({ color: tokens.value.danger }))
 	const whoBgStyle = computed(() => ({ backgroundColor: tokens.value.bgEnd }))
@@ -165,6 +167,7 @@
 	}
 
 	onLoad(() => {
+		windowMetrics.value = readWindowLayoutMetrics()
 		preload(GAME_SOUNDS)
 		keepAwake()
 		init()
@@ -187,7 +190,6 @@
 <style>
 	.container {
 		padding: 32px 20px;
-		min-height: 100vh;
 		align-items: center;
 		justify-content: center;
 	}

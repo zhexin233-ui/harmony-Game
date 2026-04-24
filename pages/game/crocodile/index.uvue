@@ -56,19 +56,22 @@
 	import { vibrateShort, vibrateLong } from '@/native/vibrator'
 	import { keepAwake, releaseAwake } from '@/native/screen'
 	import { GAME_SOUNDS } from '@/utils/game-sounds'
+	import { getGameViewportStyle, readWindowLayoutMetrics } from '@/ui/window-layout'
 
 	const session = useSession()
 	const settings = useSettings()
 	const tokens = computed(() => themes[settings.theme])
+	const windowMetrics = ref(readWindowLayoutMetrics())
 	const game = ref<CrocodileGame | null>(null)
 	const snap = ref<CrocodileSnapshot | null>(null)
 	const paused = ref(false)
 
 	const state = computed(() => snap.value?.state ?? 'ready')
 
-	const containerStyle = computed(() => ({
-		backgroundColor: state.value === 'trapTriggered' ? tokens.value.urgent : tokens.value.bg
-	}))
+	const containerStyle = computed(() => getGameViewportStyle(
+		state.value === 'trapTriggered' ? tokens.value.urgent : tokens.value.bg,
+		windowMetrics.value
+	))
 	const currentStyle = computed(() => ({ color: tokens.value.primary }))
 	const toothStyle = computed(() => ({ backgroundColor: tokens.value.bgEnd }))
 	const biteTextStyle = computed(() => ({ color: tokens.value.danger }))
@@ -130,6 +133,7 @@
 	}
 
 	onLoad(() => {
+		windowMetrics.value = readWindowLayoutMetrics()
 		preload(GAME_SOUNDS)
 		keepAwake()
 		init()
@@ -149,7 +153,6 @@
 <style>
 	.container {
 		padding: 24px 16px;
-		min-height: 100vh;
 		align-items: center;
 	}
 	.title {
