@@ -45,6 +45,16 @@ describe('useSession', () => {
     expect(s.pickedPunishmentText).toBeUndefined()
   })
 
+  it('currentGame 支持三款新增游戏 id', () => {
+    const s = useSession()
+    s.currentGame = 'number-bomb'
+    expect(s.currentGame).toBe('number-bomb')
+    s.currentGame = 'tug-of-war'
+    expect(s.currentGame).toBe('tug-of-war')
+    s.currentGame = 'finger-twister'
+    expect(s.currentGame).toBe('finger-twister')
+  })
+
   it('exitToLobby 清 currentGame 与 loser，保留玩家信息', () => {
     const s = useSession()
     s.setPlayers(4)

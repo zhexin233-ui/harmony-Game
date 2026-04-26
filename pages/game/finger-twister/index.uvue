@@ -1,0 +1,376 @@
+<template>
+	<view
+		class="container"
+		:style="containerStyle"
+		@touchstart="onTouchStart"
+		@touchend="onTouchEnd"
+		@touchcancel="onTouchEnd"
+	>
+		<view class="top-row">
+			<text class="title">指尖扭扭乐</text>
+			<text class="count" :style="mutedStyle">{{ snap?.assignments?.length ?? 0 }} / {{ snap?.maxTouches ?? 6 }}</text>
+		</view>
+
+		<view v-if="snap?.state === 'setup'" class="center-panel">
+			<AppButton label="开始" variant="primary" @tap="startGame" />
+		</view>
+
+		<view v-else-if="snap?.state === 'prompt'" class="task-layer">
+			<text class="task-title" :style="taskTitleStyle">{{ taskText(snap?.currentTask) }}</text>
+			<text class="task-time" :style="mutedStyle">{{ taskTimeText }}</text>
+			<view v-if="snap?.currentTask != null" class="target-circle" :style="taskCircleStyle(snap?.currentTask!)">
+				<text class="target-text">{{ (snap?.currentTask?.fingerNumber ?? 1) }}</text>
+			</view>
+		</view>
+
+		<view v-else-if="snap?.state === 'holding'" class="center-panel">
+			<text class="task-title" :style="taskTitleStyle">保持</text>
+		</view>
+
+		<view v-else-if="snap?.state === 'failed'" class="center-panel">
+			<text class="failed-title" :style="failedStyle">{{ failedText }}</text>
+			<AppButton label="查看结果" variant="primary" @tap="goResult" />
+		</view>
+
+		<view class="assignment-layer">
+			<view
+				v-for="item in snap?.assignments ?? []"
+				:key="item.taskId"
+				class="assignment-ring"
+				:style="assignmentStyle(item)"
+			>
+				<text class="assignment-text">{{ item.playerIndex + 1 }}-{{ item.fingerNumber }}</text>
+			</view>
+		</view>
+
+		<view class="bottom-actions">
+			<AppButton label="返回大厅" variant="ghost" @tap="onExit" />
+		</view>
+
+		<GamePausedOverlay
+			:visible="paused"
+			desc="已暂停（切后台会重置本局）"
+			@resume="onResume"
+			@restart="onRestart"
+			@exit="onExit"
+		/>
+	</view>
+</template>
+
+<script setup lang="uts">
+	import { ref, computed } from 'vue'
+	import AppButton from '@/components/AppButton.uvue'
+	import GamePausedOverlay from '@/components/GamePausedOverlay.uvue'
+	import { useSession } from '@/stores/session'
+	import { useSettings } from '@/stores/settings'
+	import { themes } from '@/theme/tokens'
+	import {
+		createFingerTwisterGame,
+		type FingerAssignment,
+		type FingerTwisterGame,
+		type FingerTwisterSnapshot,
+		type FingerTwisterTask
+	} from '@/games/finger-twister/logic'
+	import { normalizeTouchPoint, type TouchLike, type TouchPoint } from '@/native/multitouch'
+	import { preload, play } from '@/native/audio'
+	import { vibrateShort, vibrateLong } from '@/native/vibrator'
+	import { keepAwake, releaseAwake } from '@/native/screen'
+	import { GAME_SOUNDS } from '@/utils/game-sounds'
+	import { getGameViewportStyle, readWindowLayoutMetrics } from '@/ui/window-layout'
+
+	const session = useSession()
+	const settings = useSettings()
+	const tokens = computed(() => themes[settings.theme])
+	const windowMetrics = ref(readWindowLayoutMetrics())
+	const game = ref<FingerTwisterGame | null>(null)
+	const snap = ref<FingerTwisterSnapshot | null>(null)
+	const paused = ref(false)
+
+	let tickTimer : number | null = null
+	let promptTimer : number | null = null
+	let lastTickAt = 0
+	let failedHandled = false
+
+	const containerStyle = computed(() => getGameViewportStyle(
+		snap.value?.state === 'failed' ? tokens.value.urgent : tokens.value.bg,
+		windowMetrics.value
+	))
+	const mutedStyle = computed(() => ({ color: tokens.value.textMuted }))
+	const taskTitleStyle = computed(() => ({ color: tokens.value.primary }))
+	const failedStyle = computed(() => ({ color: tokens.value.danger }))
+	const taskTimeText = computed(() => {
+		const task = snap.value?.currentTask
+		if (task == null) return ''
+		const remain = Math.max(0, task.timeLimitMs - task.elapsedMs)
+		return `${Math.ceil(remain / 1000)} 秒`
+	})
+	const failedText = computed(() => {
+		const failure = snap.value?.failure
+		if (failure == null) return ''
+		const reason = failure.reason === 'timeout' ? '超时' : '松手'
+		return `${session.displayNameOf(failure.playerIndex)} ${reason}`
+	})
+
+	function playerCountForGame(): number {
+		const raw = session.playerCount > 0 ? session.playerCount : 2
+		return Math.min(4, Math.max(2, raw))
+	}
+
+	function update() {
+		snap.value = game.value!.getSnapshot()
+	}
+
+	function init() {
+		stopLoop()
+		clearPromptTimer()
+		failedHandled = false
+		game.value = createFingerTwisterGame({
+			playerCount: playerCountForGame(),
+			width: windowMetrics.value.windowWidth,
+			height: windowMetrics.value.windowHeight
+		})
+		update()
+	}
+
+	function startGame() {
+		game.value?.start()
+		play('countdown')
+		vibrateShort()
+		update()
+		startLoop()
+	}
+
+	function normalizeChangedTouch(e : TouchEvent, index : number) : TouchPoint | null {
+		const point = normalizeTouchPoint(e.changedTouches[index] as TouchLike)
+		return point == null ? null : point
+	}
+
+	function onTouchStart(e : TouchEvent) {
+		if (snap.value?.state !== 'prompt') return
+		for (let i = 0; i < e.changedTouches.length; i++) {
+			const point = normalizeChangedTouch(e, i)
+			if (point == null) continue
+			const ok = game.value?.addTouch(point.id, point) ?? false
+			if (ok) {
+				play('click')
+				vibrateShort()
+				update()
+				scheduleNextPrompt()
+				return
+			}
+		}
+	}
+
+	function onTouchEnd(e : TouchEvent) {
+		if (snap.value?.state === 'failed') return
+		for (let i = 0; i < e.changedTouches.length; i++) {
+			const point = normalizeChangedTouch(e, i)
+			if (point == null) continue
+			game.value?.releaseTouch(point.id)
+		}
+		update()
+		if (snap.value?.state === 'failed') onFailed()
+	}
+
+	function scheduleNextPrompt() {
+		clearPromptTimer()
+		promptTimer = setTimeout(() => {
+			game.value?.promptNext()
+			update()
+		}, 500) as unknown as number
+	}
+
+	function clearPromptTimer() {
+		if (promptTimer != null) {
+			clearTimeout(promptTimer)
+			promptTimer = null
+		}
+	}
+
+	function startLoop() {
+		if (tickTimer != null) return
+		lastTickAt = Date.now()
+		tickTimer = setInterval(() => {
+			const now = Date.now()
+			const delta = now - lastTickAt
+			lastTickAt = now
+			game.value?.tick(delta)
+			update()
+			if (snap.value?.state === 'failed') onFailed()
+		}, 50) as unknown as number
+	}
+
+	function stopLoop() {
+		if (tickTimer != null) {
+			clearInterval(tickTimer)
+			tickTimer = null
+		}
+	}
+
+	function onFailed() {
+		if (failedHandled) return
+		failedHandled = true
+		stopLoop()
+		clearPromptTimer()
+		if (snap.value?.result != null) session.loser = snap.value.result.loser
+		play('lose')
+		vibrateLong()
+	}
+
+	function goResult() {
+		if (snap.value?.result == null) return
+		session.loser = snap.value.result.loser
+		stopLoop()
+		clearPromptTimer()
+		releaseAwake()
+		uni.redirectTo({ url: '/pages/game/result' })
+	}
+
+	function taskText(task : FingerTwisterTask | undefined) : string {
+		if (task == null) return ''
+		return `${session.displayNameOf(task.playerIndex)} 第 ${task.fingerNumber} 指`
+	}
+
+	function taskCircleStyle(task : FingerTwisterTask) {
+		const diameter = task.circle.radius * 2
+		return {
+			left: `${task.circle.x - task.circle.radius}px`,
+			top: `${task.circle.y - task.circle.radius}px`,
+			width: `${diameter}px`,
+			height: `${diameter}px`,
+			borderRadius: `${task.circle.radius}px`,
+			backgroundColor: task.circle.color,
+			boxShadow: `0 0 24px ${task.circle.color}`
+		}
+	}
+
+	function assignmentStyle(item : FingerAssignment) {
+		const diameter = item.circle.radius * 2
+		return {
+			left: `${item.circle.x - item.circle.radius}px`,
+			top: `${item.circle.y - item.circle.radius}px`,
+			width: `${diameter}px`,
+			height: `${diameter}px`,
+			borderRadius: `${item.circle.radius}px`,
+			borderColor: item.circle.color,
+			boxShadow: `0 0 18px ${item.circle.color}`
+		}
+	}
+
+	function onResume() { paused.value = false; onRestart() }
+	function onRestart() { paused.value = false; init() }
+	function onExit() {
+		paused.value = false
+		stopLoop()
+		clearPromptTimer()
+		releaseAwake()
+		session.exitToLobby()
+		uni.redirectTo({ url: '/pages/lobby/games' })
+	}
+
+	onLoad(() => {
+		windowMetrics.value = readWindowLayoutMetrics()
+		preload(GAME_SOUNDS)
+		keepAwake()
+		init()
+	})
+
+	onUnload(() => {
+		stopLoop()
+		clearPromptTimer()
+		releaseAwake()
+	})
+
+	onHide(() => {
+		if (snap.value?.state !== 'failed') {
+			stopLoop()
+			clearPromptTimer()
+			paused.value = true
+		}
+	})
+</script>
+
+<style>
+	.container {
+		position: relative;
+		padding: 18px;
+		overflow: hidden;
+	}
+	.top-row {
+		position: relative;
+		z-index: 30;
+		width: 100%;
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
+	}
+	.title {
+		font-size: 22px;
+		font-weight: bold;
+	}
+	.count {
+		font-size: 16px;
+		font-weight: bold;
+	}
+	.center-panel,
+	.task-layer {
+		position: relative;
+		z-index: 30;
+		width: 100%;
+		height: 520px;
+		align-items: center;
+		justify-content: center;
+	}
+	.task-title {
+		font-size: 24px;
+		font-weight: bold;
+		margin-bottom: 8px;
+	}
+	.task-time {
+		font-size: 18px;
+		font-weight: bold;
+	}
+	.target-circle {
+		position: absolute;
+		align-items: center;
+		justify-content: center;
+	}
+	.target-text {
+		font-size: 24px;
+		font-weight: bold;
+		color: #ffffff;
+	}
+	.assignment-layer {
+		position: absolute;
+		left: 0;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 10;
+	}
+	.assignment-ring {
+		position: absolute;
+		border-width: 4px;
+		background-color: rgba(255, 255, 255, 0.16);
+		align-items: center;
+		justify-content: center;
+	}
+	.assignment-text {
+		font-size: 14px;
+		font-weight: bold;
+		color: #ffffff;
+	}
+	.failed-title {
+		font-size: 28px;
+		font-weight: bold;
+		margin-bottom: 14px;
+	}
+	.bottom-actions {
+		position: absolute;
+		left: 18px;
+		right: 18px;
+		bottom: 20px;
+		z-index: 40;
+		align-items: center;
+	}
+</style>

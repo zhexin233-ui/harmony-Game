@@ -43,6 +43,24 @@
 			}
 		},
 		{
+			"path": "pages/game/number-bomb/index",
+			"style": {
+				"navigationBarTitleText": "数字炸弹"
+			}
+		},
+		{
+			"path": "pages/game/tug-of-war/index",
+			"style": {
+				"navigationBarTitleText": "疯狂拔河"
+			}
+		},
+		{
+			"path": "pages/game/finger-twister/index",
+			"style": {
+				"navigationBarTitleText": "指尖扭扭乐"
+			}
+		},
+		{
 			"path": "pages/game/crocodile/index",
 			"style": {
 				"navigationBarTitleText": "鳄鱼拔牙"

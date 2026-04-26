@@ -1,0 +1,338 @@
+<template>
+	<view class="container" :style="containerStyle">
+		<view class="title-row">
+			<UiIcon name="game-number-bomb" :size="32" />
+			<text class="title">数字炸弹</text>
+		</view>
+
+		<view v-if="snap?.state === 'setup'" class="setup-panel">
+			<text class="range-title" :style="mutedStyle">当前范围</text>
+			<view class="preset-row">
+				<view
+					class="preset"
+					:class="{ active: snap?.preset === '1-100' }"
+					:style="presetStyle('1-100')"
+					@tap="choosePreset('1-100')"
+				>
+					<text class="preset-text" :style="presetTextStyle('1-100')">1-100</text>
+				</view>
+				<view
+					class="preset"
+					:class="{ active: snap?.preset === '1-999' }"
+					:style="presetStyle('1-999')"
+					@tap="choosePreset('1-999')"
+				>
+					<text class="preset-text" :style="presetTextStyle('1-999')">1-999</text>
+				</view>
+			</view>
+			<AppButton label="开始猜数" variant="primary" @tap="startGame" />
+		</view>
+
+		<view v-else-if="snap?.state === 'guessing'" class="guess-panel">
+			<text class="range-value" :style="rangeStyle">当前范围 {{ snap?.displayMin ?? 1 }} - {{ snap?.displayMax ?? 100 }}</text>
+			<text class="player" :style="playerStyle">当前玩家 {{ session.displayNameOf(snap?.currentPlayerIndex ?? 0) }}</text>
+
+			<view class="input-box" :style="inputBoxStyle">
+				<text class="input-text">{{ inputText }}</text>
+			</view>
+			<text v-if="snap?.inputError != null" class="error" :style="errorStyle">{{ snap?.inputError }}</text>
+
+			<view class="keypad">
+				<view v-for="digit in digits" :key="digit" class="key" :style="keyStyle" @tap="appendDigit(digit)">
+					<text class="key-text">{{ digit }}</text>
+				</view>
+				<view class="key" :style="keyStyle" @tap="backspace">
+					<text class="key-text">退格</text>
+				</view>
+				<view class="key" :style="keyStyle" @tap="appendDigit('0')">
+					<text class="key-text">0</text>
+				</view>
+				<view class="key key-submit" :style="submitKeyStyle" @tap="submitGuess">
+					<text class="submit-text" :style="submitTextStyle">提交</text>
+				</view>
+			</view>
+
+			<view class="history" :style="historyStyle">
+				<text class="history-title">历史记录</text>
+				<view v-for="item in snap?.guesses ?? []" :key="`${item.playerIndex}-${item.value}-${item.rangeBefore.min}`" class="history-row">
+					<text class="history-text" :style="mutedStyle">
+						{{ session.displayNameOf(item.playerIndex) }}：{{ item.value }}（{{ item.rangeBefore.min }}-{{ item.rangeBefore.max }}）
+					</text>
+				</view>
+			</view>
+		</view>
+
+		<view v-else-if="snap?.state === 'exploded'" class="exploded-panel anim-shake">
+			<UiIcon name="explosion" :size="72" />
+			<text class="boom" :style="boomStyle">爆炸了</text>
+			<text class="player" :style="playerStyle">当前玩家 {{ session.displayNameOf(snap?.result?.loser ?? 0) }}</text>
+			<AppButton label="查看结果" variant="primary" @tap="goResult" />
+		</view>
+
+		<AppButton label="返回大厅" variant="ghost" @tap="onExit" />
+
+		<GamePausedOverlay
+			:visible="paused"
+			desc="已暂停（切后台会重置本局）"
+			@resume="onResume"
+			@restart="onRestart"
+			@exit="onExit"
+		/>
+	</view>
+</template>
+
+<script setup lang="uts">
+	import { ref, computed } from 'vue'
+	import AppButton from '@/components/AppButton.uvue'
+	import GamePausedOverlay from '@/components/GamePausedOverlay.uvue'
+	import UiIcon from '@/components/UiIcon.uvue'
+	import { useSession } from '@/stores/session'
+	import { useSettings } from '@/stores/settings'
+	import { themes } from '@/theme/tokens'
+	import { createNumberBombGame, type NumberBombGame, type NumberBombPreset, type NumberBombSnapshot } from '@/games/number-bomb/logic'
+	import { preload, play } from '@/native/audio'
+	import { vibrateShort, vibrateLong } from '@/native/vibrator'
+	import { keepAwake, releaseAwake } from '@/native/screen'
+	import { GAME_SOUNDS } from '@/utils/game-sounds'
+	import { getGameViewportStyle, readWindowLayoutMetrics } from '@/ui/window-layout'
+
+	const session = useSession()
+	const settings = useSettings()
+	const tokens = computed(() => themes[settings.theme])
+	const windowMetrics = ref(readWindowLayoutMetrics())
+	const game = ref<NumberBombGame | null>(null)
+	const snap = ref<NumberBombSnapshot | null>(null)
+	const inputText = ref('')
+	const paused = ref(false)
+	const digits = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+
+	const containerStyle = computed(() => getGameViewportStyle(
+		snap.value?.state === 'exploded' ? tokens.value.urgent : tokens.value.bg,
+		windowMetrics.value
+	))
+	const mutedStyle = computed(() => ({ color: tokens.value.textMuted }))
+	const rangeStyle = computed(() => ({ color: tokens.value.primary }))
+	const playerStyle = computed(() => ({ color: tokens.value.text }))
+	const errorStyle = computed(() => ({ color: tokens.value.danger }))
+	const inputBoxStyle = computed(() => ({ backgroundColor: tokens.value.bgEnd }))
+	const keyStyle = computed(() => ({ backgroundColor: tokens.value.surfaceHigh }))
+	const submitKeyStyle = computed(() => ({ backgroundColor: tokens.value.primary }))
+	const submitTextStyle = computed(() => ({ color: tokens.value.onPrimary }))
+	const historyStyle = computed(() => ({ backgroundColor: tokens.value.bgEnd }))
+	const boomStyle = computed(() => ({ color: tokens.value.danger }))
+
+	function presetStyle(preset : NumberBombPreset) {
+		return {
+			backgroundColor: snap.value?.preset === preset ? tokens.value.primary : tokens.value.surfaceHigh
+		}
+	}
+
+	function presetTextStyle(preset : NumberBombPreset) {
+		return {
+			color: snap.value?.preset === preset ? tokens.value.onPrimary : tokens.value.text
+		}
+	}
+
+	function playerCountForGame(): number {
+		const raw = session.playerCount > 0 ? session.playerCount : 2
+		return Math.min(8, Math.max(2, raw))
+	}
+
+	function update() {
+		snap.value = game.value!.getSnapshot()
+	}
+
+	function init() {
+		game.value = createNumberBombGame({ playerCount: playerCountForGame() })
+		inputText.value = ''
+		update()
+	}
+
+	function choosePreset(preset : NumberBombPreset) {
+		if (snap.value?.state !== 'setup') return
+		game.value?.setPreset(preset)
+		play('click')
+		update()
+	}
+
+	function startGame() {
+		game.value?.start()
+		play('countdown')
+		vibrateShort()
+		update()
+	}
+
+	function appendDigit(value : string) {
+		if ((snap.value?.state ?? 'setup') !== 'guessing') return
+		if (inputText.value.length >= 3) return
+		inputText.value += value
+	}
+
+	function backspace() {
+		if (inputText.value.length === 0) return
+		inputText.value = inputText.value.slice(0, inputText.value.length - 1)
+	}
+
+	function submitGuess() {
+		const value = Number(inputText.value)
+		game.value?.submitGuess(value)
+		inputText.value = ''
+		update()
+		if (snap.value?.state === 'exploded') {
+			session.loser = snap.value.result!.loser
+			play('explode')
+			vibrateLong()
+			return
+		}
+		if (snap.value?.inputError == null) {
+			play('click')
+			vibrateShort()
+		}
+	}
+
+	function goResult() {
+		if (snap.value?.result == null) return
+		session.loser = snap.value.result.loser
+		releaseAwake()
+		uni.redirectTo({ url: '/pages/game/result' })
+	}
+
+	function onResume() { paused.value = false; onRestart() }
+	function onRestart() { paused.value = false; init() }
+	function onExit() {
+		paused.value = false
+		releaseAwake()
+		session.exitToLobby()
+		uni.redirectTo({ url: '/pages/lobby/games' })
+	}
+
+	onLoad(() => {
+		windowMetrics.value = readWindowLayoutMetrics()
+		preload(GAME_SOUNDS)
+		keepAwake()
+		init()
+	})
+
+	onUnload(() => {
+		releaseAwake()
+	})
+
+	onHide(() => {
+		if (snap.value?.state === 'guessing') paused.value = true
+	})
+</script>
+
+<style>
+	.container {
+		padding: 24px 18px;
+		align-items: center;
+		justify-content: center;
+	}
+	.title-row {
+		flex-direction: row;
+		align-items: center;
+		margin-bottom: 20px;
+	}
+	.title {
+		font-size: 24px;
+		font-weight: bold;
+		margin-left: 10px;
+	}
+	.setup-panel,
+	.guess-panel,
+	.exploded-panel {
+		width: 100%;
+		align-items: center;
+	}
+	.range-title {
+		font-size: 16px;
+		margin-bottom: 10px;
+	}
+	.preset-row {
+		flex-direction: row;
+		justify-content: center;
+		margin-bottom: 16px;
+	}
+	.preset {
+		width: 112px;
+		height: 48px;
+		border-radius: 16px;
+		align-items: center;
+		justify-content: center;
+		margin: 0 6px;
+	}
+	.preset-text {
+		font-size: 18px;
+		font-weight: bold;
+	}
+	.range-value {
+		font-size: 28px;
+		font-weight: bold;
+		margin-bottom: 10px;
+	}
+	.player {
+		font-size: 18px;
+		font-weight: bold;
+		margin-bottom: 12px;
+	}
+	.input-box {
+		width: 180px;
+		height: 56px;
+		border-radius: 16px;
+		align-items: center;
+		justify-content: center;
+		margin-bottom: 8px;
+	}
+	.input-text {
+		font-size: 28px;
+		font-weight: bold;
+	}
+	.error {
+		font-size: 14px;
+		min-height: 22px;
+		margin-bottom: 8px;
+	}
+	.keypad {
+		width: 258px;
+		flex-direction: row;
+		flex-wrap: wrap;
+		justify-content: center;
+	}
+	.key {
+		width: 76px;
+		height: 52px;
+		border-radius: 14px;
+		align-items: center;
+		justify-content: center;
+		margin: 5px;
+	}
+	.key-text,
+	.submit-text {
+		font-size: 18px;
+		font-weight: bold;
+	}
+	.history {
+		width: 100%;
+		min-height: 88px;
+		max-height: 160px;
+		border-radius: 16px;
+		padding: 12px;
+		margin-top: 14px;
+	}
+	.history-title {
+		font-size: 16px;
+		font-weight: bold;
+		margin-bottom: 6px;
+	}
+	.history-row {
+		padding: 3px 0;
+	}
+	.history-text {
+		font-size: 14px;
+	}
+	.boom {
+		font-size: 34px;
+		font-weight: bold;
+		margin: 16px 0 8px 0;
+	}
+</style>

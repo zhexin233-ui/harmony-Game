@@ -67,6 +67,16 @@ export const GAME_GROUPS: GameGroup[] = [
         cover: '/static/game-covers/game5.png'
       },
       {
+        id: 'number-bomb',
+        name: '数字炸弹',
+        summary: '轮流猜数，猜中炸弹受罚',
+        fallbackIconKey: 'game-number-bomb',
+        min: 2,
+        max: 8,
+        category: 'luck',
+        cover: ''
+      },
+      {
         id: 'crocodile',
         name: '鳄鱼拔牙',
         summary: '试试手气，别被咬到',
@@ -112,6 +122,26 @@ export const GAME_GROUPS: GameGroup[] = [
         max: 5,
         category: 'skill',
         cover: '/static/game-covers/game1.png'
+      },
+      {
+        id: 'tug-of-war',
+        name: '疯狂拔河',
+        summary: '双人代表对点抢胜',
+        fallbackIconKey: 'game-tug-of-war',
+        min: 2,
+        max: 8,
+        category: 'skill',
+        cover: ''
+      },
+      {
+        id: 'finger-twister',
+        name: '指尖扭扭乐',
+        summary: '多人按圈，坚持到最后',
+        fallbackIconKey: 'game-finger-twister',
+        min: 2,
+        max: 4,
+        category: 'skill',
+        cover: ''
       }
     ]
   }
@@ -119,10 +149,13 @@ export const GAME_GROUPS: GameGroup[] = [
 
 const GAME_ROUTES: Record<GameId, string> = {
   bomb: '/pages/game/bomb/index',
+  'number-bomb': '/pages/game/number-bomb/index',
   crocodile: '/pages/game/crocodile/index',
   'horse-race': '/pages/game/horse-race/index',
   wheel: '/pages/game/wheel/index',
-  reaction: '/pages/game/reaction/index'
+  reaction: '/pages/game/reaction/index',
+  'tug-of-war': '/pages/game/tug-of-war/index',
+  'finger-twister': '/pages/game/finger-twister/index'
 }
 
 export function getVisibleGameGroups(filter: GameFilter): GameGroup[] {
