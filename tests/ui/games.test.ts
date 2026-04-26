@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, it, expect } from 'vitest'
 import {
   GAME_GROUPS,
@@ -111,9 +113,22 @@ describe('games ui logic', () => {
   it('按指定关系对调游戏封面图', () => {
     const allGames = GAME_GROUPS.flatMap((group) => group.games)
     expect(allGames.find((game) => game.id === 'bomb')?.cover).toBe('/static/game-covers/game5.png')
-    expect(allGames.find((game) => game.id === 'reaction')?.cover).toBe('/static/game-covers/game1.png')
+    expect(allGames.find((game) => game.id === 'number-bomb')?.cover).toBe('/static/game-covers/数字炸弹.png')
     expect(allGames.find((game) => game.id === 'crocodile')?.cover).toBe('/static/game-covers/game4.png')
+    expect(allGames.find((game) => game.id === 'wheel')?.cover).toBe('/static/game-covers/game1.png')
     expect(allGames.find((game) => game.id === 'horse-race')?.cover).toBe('/static/game-covers/game2.png')
+    expect(allGames.find((game) => game.id === 'reaction')?.cover).toBe('/static/game-covers/game3.png')
+    expect(allGames.find((game) => game.id === 'tug-of-war')?.cover).toBe('/static/game-covers/疯狂拔河.png')
+    expect(allGames.find((game) => game.id === 'finger-twister')?.cover).toBe('/static/game-covers/指尖扭扭乐.png')
+  })
+
+  it('所有配置的游戏封面都指向本地静态图片文件', () => {
+    const allGames = GAME_GROUPS.flatMap((group) => group.games)
+
+    for (const game of allGames) {
+      const coverPath = game.cover.replace(/^\//, '')
+      expect(existsSync(join(process.cwd(), coverPath)), `${game.name} 封面文件应存在`).toBe(true)
+    }
   })
 
   it('图片失败时降级为 svg 图标', () => {

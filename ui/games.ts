@@ -74,7 +74,7 @@ export const GAME_GROUPS: GameGroup[] = [
         min: 2,
         max: 8,
         category: 'luck',
-        cover: ''
+        cover: '/static/game-covers/数字炸弹.png'
       },
       {
         id: 'crocodile',
@@ -94,7 +94,7 @@ export const GAME_GROUPS: GameGroup[] = [
         min: 2,
         max: 5,
         category: 'luck',
-        cover: '/static/game-covers/game3.png'
+        cover: '/static/game-covers/game1.png'
       }
     ]
   },
@@ -121,7 +121,7 @@ export const GAME_GROUPS: GameGroup[] = [
         min: 2,
         max: 5,
         category: 'skill',
-        cover: '/static/game-covers/game1.png'
+        cover: '/static/game-covers/game3.png'
       },
       {
         id: 'tug-of-war',
@@ -131,7 +131,7 @@ export const GAME_GROUPS: GameGroup[] = [
         min: 2,
         max: 8,
         category: 'skill',
-        cover: ''
+        cover: '/static/game-covers/疯狂拔河.png'
       },
       {
         id: 'finger-twister',
@@ -141,7 +141,7 @@ export const GAME_GROUPS: GameGroup[] = [
         min: 2,
         max: 4,
         category: 'skill',
-        cover: ''
+        cover: '/static/game-covers/指尖扭扭乐.png'
       }
     ]
   }
