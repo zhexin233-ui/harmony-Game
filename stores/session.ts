@@ -1,6 +1,14 @@
 import { defineStore } from 'pinia'
 
-export type GameId = 'horse-race' | 'bomb' | 'crocodile' | 'reaction' | 'wheel'
+export type GameId =
+  | 'horse-race'
+  | 'bomb'
+  | 'number-bomb'
+  | 'crocodile'
+  | 'reaction'
+  | 'tug-of-war'
+  | 'finger-twister'
+  | 'wheel'
 
 // 惰性工厂：见 stores/settings.ts 注释
 const _factory = () => defineStore('session', {

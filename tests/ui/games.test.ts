@@ -15,8 +15,55 @@ describe('games ui logic', () => {
   it('保留运气派和实力派两组游戏', () => {
     expect(GAME_GROUPS.map((group) => group.title)).toEqual(['运气派', '实力派'])
     expect(GAME_GROUPS.map((group) => group.iconKey)).toEqual(['group-luck', 'group-skill'])
-    expect(GAME_GROUPS[0].games.map((game) => game.id)).toEqual(['bomb', 'crocodile', 'wheel'])
-    expect(GAME_GROUPS[1].games.map((game) => game.id)).toEqual(['horse-race', 'reaction'])
+    expect(GAME_GROUPS[0].games.map((game) => game.id)).toEqual([
+      'bomb',
+      'number-bomb',
+      'crocodile',
+      'wheel'
+    ])
+    expect(GAME_GROUPS[1].games.map((game) => game.id)).toEqual([
+      'horse-race',
+      'reaction',
+      'tug-of-war',
+      'finger-twister'
+    ])
+  })
+
+  it('新增数字炸弹、疯狂拔河、指尖扭扭乐并保持分类顺序', () => {
+    expect(GAME_GROUPS[0].games.map((game) => game.id)).toEqual([
+      'bomb',
+      'number-bomb',
+      'crocodile',
+      'wheel'
+    ])
+    expect(GAME_GROUPS[1].games.map((game) => game.id)).toEqual([
+      'horse-race',
+      'reaction',
+      'tug-of-war',
+      'finger-twister'
+    ])
+  })
+
+  it('新增游戏的人数限制符合设计', () => {
+    const allGames = GAME_GROUPS.flatMap((group) => group.games)
+    expect(allGames.find((game) => game.id === 'number-bomb')).toMatchObject({
+      min: 2,
+      max: 8,
+      category: 'luck',
+      fallbackIconKey: 'game-number-bomb'
+    })
+    expect(allGames.find((game) => game.id === 'tug-of-war')).toMatchObject({
+      min: 2,
+      max: 8,
+      category: 'skill',
+      fallbackIconKey: 'game-tug-of-war'
+    })
+    expect(allGames.find((game) => game.id === 'finger-twister')).toMatchObject({
+      min: 2,
+      max: 4,
+      category: 'skill',
+      fallbackIconKey: 'game-finger-twister'
+    })
   })
 
   it('分类过滤只影响当前页展示', () => {
@@ -45,6 +92,12 @@ describe('games ui logic', () => {
   it('为每个游戏生成真实游戏页路由', () => {
     expect(getGameRoute('bomb')).toBe('/pages/game/bomb/index')
     expect(getGameRoute('horse-race')).toBe('/pages/game/horse-race/index')
+  })
+
+  it('为三款新增游戏生成真实游戏页路由', () => {
+    expect(getGameRoute('number-bomb')).toBe('/pages/game/number-bomb/index')
+    expect(getGameRoute('tug-of-war')).toBe('/pages/game/tug-of-war/index')
+    expect(getGameRoute('finger-twister')).toBe('/pages/game/finger-twister/index')
   })
 
   it('优先使用本地图片封面', () => {

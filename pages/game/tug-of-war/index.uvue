@@ -1,0 +1,472 @@
+<template>
+	<view class="container" :style="containerStyle">
+		<view class="score-bar">
+			<text class="score red" :style="redTextStyle">红 {{ snap?.redScore ?? 0 }}</text>
+			<text class="title">疯狂拔河</text>
+			<text class="score blue" :style="blueTextStyle">蓝 {{ snap?.blueScore ?? 0 }}</text>
+		</view>
+
+		<view v-if="snap?.state === 'setup'" class="setup-panel">
+			<view class="rep-row">
+				<view class="rep-card" :style="redCardStyle">
+					<text class="rep-label">红方</text>
+					<text class="rep-name">{{ redName }}</text>
+				</view>
+				<view class="rep-card" :style="blueCardStyle">
+					<text class="rep-label">蓝方</text>
+					<text class="rep-name">{{ blueName }}</text>
+				</view>
+			</view>
+			<AppButton label="重新抽取" variant="secondary" @tap="reroll" />
+
+			<view class="switch-row">
+				<view class="switch-item" :style="modeStyle('single')" @tap="setMode('single')">
+					<text class="switch-text" :style="modeTextStyle('single')">单局</text>
+				</view>
+				<view class="switch-item" :style="modeStyle('best-of-three')" @tap="setMode('best-of-three')">
+					<text class="switch-text" :style="modeTextStyle('best-of-three')">三局两胜</text>
+				</view>
+			</view>
+
+			<view class="switch-row">
+				<view class="switch-item" :style="conditionStyle('timed')" @tap="setWinCondition('timed')">
+					<text class="switch-text" :style="conditionTextStyle('timed')">限时</text>
+				</view>
+				<view class="switch-item" :style="conditionStyle('threshold')" @tap="setWinCondition('threshold')">
+					<text class="switch-text" :style="conditionTextStyle('threshold')">终点</text>
+				</view>
+			</view>
+
+			<AppButton label="开始" variant="primary" @tap="startRound" />
+		</view>
+
+		<view v-else-if="snap?.state === 'countdown'" class="center-panel">
+			<text class="countdown" :style="countdownStyle">{{ countdownText }}</text>
+		</view>
+
+		<view v-else-if="snap?.state === 'playing'" class="play-field">
+			<view class="timer-row">
+				<text class="timer" :style="mutedStyle">{{ roundText }}</text>
+			</view>
+			<view class="tap-area-row">
+				<view class="tap-half red-half" :style="redHalfStyle" @tap="tapSide('red')">
+					<text class="tap-label">红方</text>
+				</view>
+				<view class="tap-half blue-half" :style="blueHalfStyle" @tap="tapSide('blue')">
+					<text class="tap-label">蓝方</text>
+				</view>
+				<view class="center-line" :style="centerLineStyle"></view>
+				<view class="rope" :style="ropeStyle">
+					<view class="rope-knot" :style="knotStyle"></view>
+				</view>
+			</view>
+			<view class="click-row">
+				<text class="click-text" :style="redTextStyle">{{ snap?.redEffectiveClicks ?? 0 }}</text>
+				<text class="click-text" :style="blueTextStyle">{{ snap?.blueEffectiveClicks ?? 0 }}</text>
+			</view>
+		</view>
+
+		<view v-else-if="snap?.state === 'roundResult'" class="center-panel">
+			<text class="winner" :style="winnerStyle">{{ roundWinnerText }}</text>
+			<AppButton label="下一局" variant="primary" @tap="startNextRound" />
+		</view>
+
+		<view v-else-if="snap?.state === 'matchResult'" class="center-panel">
+			<text class="winner" :style="winnerStyle">{{ matchWinnerText }}</text>
+			<text class="loser" :style="loserStyle">{{ loserText }}</text>
+			<AppButton label="查看结果" variant="primary" @tap="goResult" />
+		</view>
+
+		<AppButton label="返回大厅" variant="ghost" @tap="onExit" />
+
+		<GamePausedOverlay
+			:visible="paused"
+			desc="已暂停（切后台会重置本局）"
+			@resume="onResume"
+			@restart="onRestart"
+			@exit="onExit"
+		/>
+	</view>
+</template>
+
+<script setup lang="uts">
+	import { ref, computed } from 'vue'
+	import AppButton from '@/components/AppButton.uvue'
+	import GamePausedOverlay from '@/components/GamePausedOverlay.uvue'
+	import { useSession } from '@/stores/session'
+	import { useSettings } from '@/stores/settings'
+	import { themes } from '@/theme/tokens'
+	import {
+		createTugOfWarGame,
+		type TugMatchMode,
+		type TugOfWarGame,
+		type TugSide,
+		type TugSnapshot,
+		type TugWinCondition
+	} from '@/games/tug-of-war/logic'
+	import { preload, play } from '@/native/audio'
+	import { vibrateShort, vibrateLong } from '@/native/vibrator'
+	import { keepAwake, releaseAwake } from '@/native/screen'
+	import { GAME_SOUNDS } from '@/utils/game-sounds'
+	import { getGameViewportStyle, readWindowLayoutMetrics } from '@/ui/window-layout'
+
+	const session = useSession()
+	const settings = useSettings()
+	const tokens = computed(() => themes[settings.theme])
+	const windowMetrics = ref(readWindowLayoutMetrics())
+	const game = ref<TugOfWarGame | null>(null)
+	const snap = ref<TugSnapshot | null>(null)
+	const paused = ref(false)
+
+	let tickTimer : number | null = null
+	let lastTickAt = 0
+	let matchFinishedHandled = false
+
+	const containerStyle = computed(() => getGameViewportStyle(tokens.value.bg, windowMetrics.value))
+	const mutedStyle = computed(() => ({ color: tokens.value.textMuted }))
+	const countdownStyle = computed(() => ({ color: tokens.value.primary }))
+	const redTextStyle = computed(() => ({ color: '#fb5151' }))
+	const blueTextStyle = computed(() => ({ color: '#00a3ff' }))
+	const redCardStyle = computed(() => ({ backgroundColor: '#fb5151' }))
+	const blueCardStyle = computed(() => ({ backgroundColor: '#00a3ff' }))
+	const redHalfStyle = computed(() => ({ backgroundColor: '#fb5151' }))
+	const blueHalfStyle = computed(() => ({ backgroundColor: '#00a3ff' }))
+	const centerLineStyle = computed(() => ({ backgroundColor: tokens.value.bg }))
+	const knotStyle = computed(() => ({ backgroundColor: tokens.value.accent }))
+	const winnerStyle = computed(() => ({ color: tokens.value.primary }))
+	const loserStyle = computed(() => ({ color: tokens.value.danger }))
+
+	const redName = computed(() => session.displayNameOf(snap.value?.representative.redPlayerIndex ?? 0))
+	const blueName = computed(() => session.displayNameOf(snap.value?.representative.bluePlayerIndex ?? 1))
+	const countdownText = computed(() => `${Math.ceil((snap.value?.countdownRemainingMs ?? 0) / 1000)}`)
+	const roundText = computed(() => {
+		const s = snap.value
+		if (s == null) return '0 秒'
+		if (s.winCondition === 'threshold') return `第 ${s.roundIndex} 局`
+		const remain = Math.max(0, s.roundDurationMs - s.roundElapsedMs)
+		return `${Math.ceil(remain / 1000)} 秒`
+	})
+	const roundWinnerText = computed(() => `${snap.value?.roundWinner === 'red' ? '红方' : '蓝方'}胜`)
+	const matchWinnerText = computed(() => `${snap.value?.matchWinner === 'red' ? '红方' : '蓝方'}胜`)
+	const loserText = computed(() => {
+		const s = snap.value
+		if (s?.result == null) return ''
+		return `${session.displayNameOf(s.result.loser)} 输了`
+	})
+	const ropeStyle = computed(() => {
+		const x = Math.round((snap.value?.ropePosition ?? 0) * 120)
+		return { transform: `translateX(${x}px)` }
+	})
+
+	function selectedStyle(selected : boolean) {
+		return {
+			backgroundColor: selected ? tokens.value.primary : tokens.value.surfaceHigh
+		}
+	}
+
+	function selectedTextStyle(selected : boolean) {
+		return {
+			color: selected ? tokens.value.onPrimary : tokens.value.text
+		}
+	}
+
+	function modeStyle(mode : TugMatchMode) {
+		return selectedStyle(snap.value?.mode === mode)
+	}
+
+	function modeTextStyle(mode : TugMatchMode) {
+		return selectedTextStyle(snap.value?.mode === mode)
+	}
+
+	function conditionStyle(condition : TugWinCondition) {
+		return selectedStyle(snap.value?.winCondition === condition)
+	}
+
+	function conditionTextStyle(condition : TugWinCondition) {
+		return selectedTextStyle(snap.value?.winCondition === condition)
+	}
+
+	function playerCountForGame(): number {
+		const raw = session.playerCount > 0 ? session.playerCount : 2
+		return Math.min(8, Math.max(2, raw))
+	}
+
+	function update() {
+		snap.value = game.value!.getSnapshot()
+	}
+
+	function init() {
+		stopLoop()
+		matchFinishedHandled = false
+		game.value = createTugOfWarGame({ playerCount: playerCountForGame() })
+		update()
+	}
+
+	function reroll() {
+		game.value?.rerollRepresentatives()
+		play('click')
+		update()
+	}
+
+	function setMode(mode : TugMatchMode) {
+		game.value?.setMode(mode)
+		play('click')
+		update()
+	}
+
+	function setWinCondition(condition : TugWinCondition) {
+		game.value?.setWinCondition(condition)
+		play('click')
+		update()
+	}
+
+	function startRound() {
+		matchFinishedHandled = false
+		game.value?.startRound()
+		play('countdown')
+		vibrateShort()
+		update()
+		startLoop()
+	}
+
+	function startNextRound() {
+		game.value?.startNextRound()
+		play('countdown')
+		vibrateShort()
+		update()
+		startLoop()
+	}
+
+	function tapSide(side : TugSide) {
+		const width = windowMetrics.value.windowWidth
+		const x = side === 'red' ? width * 0.25 : width * 0.75
+		const ok = game.value?.tap(side, { id: side === 'red' ? 1 : 2, x, y: 0 }, width, Date.now()) ?? false
+		if (!ok) return
+		play('click')
+		vibrateShort()
+		update()
+		if (snap.value?.state === 'matchResult') onMatchFinished()
+	}
+
+	function startLoop() {
+		if (tickTimer != null) return
+		lastTickAt = Date.now()
+		tickTimer = setInterval(() => {
+			const now = Date.now()
+			const delta = now - lastTickAt
+			lastTickAt = now
+			game.value?.tick(delta)
+			update()
+			const state = snap.value?.state
+			if (state === 'roundResult') {
+				stopLoop()
+				play('win')
+				vibrateShort()
+			}
+			if (state === 'matchResult') onMatchFinished()
+		}, 50) as unknown as number
+	}
+
+	function stopLoop() {
+		if (tickTimer != null) {
+			clearInterval(tickTimer)
+			tickTimer = null
+		}
+	}
+
+	function onMatchFinished() {
+		if (matchFinishedHandled) return
+		matchFinishedHandled = true
+		stopLoop()
+		if (snap.value?.result != null) session.loser = snap.value.result.loser
+		play('lose')
+		vibrateLong()
+	}
+
+	function goResult() {
+		if (snap.value?.result == null) return
+		session.loser = snap.value.result.loser
+		stopLoop()
+		releaseAwake()
+		uni.redirectTo({ url: '/pages/game/result' })
+	}
+
+	function onResume() { paused.value = false; onRestart() }
+	function onRestart() { paused.value = false; init() }
+	function onExit() {
+		paused.value = false
+		stopLoop()
+		releaseAwake()
+		session.exitToLobby()
+		uni.redirectTo({ url: '/pages/lobby/games' })
+	}
+
+	onLoad(() => {
+		windowMetrics.value = readWindowLayoutMetrics()
+		preload(GAME_SOUNDS)
+		keepAwake()
+		init()
+	})
+
+	onUnload(() => {
+		stopLoop()
+		releaseAwake()
+	})
+
+	onHide(() => {
+		if (snap.value?.state === 'countdown' || snap.value?.state === 'playing') {
+			stopLoop()
+			paused.value = true
+		}
+	})
+</script>
+
+<style>
+	.container {
+		padding: 18px;
+		align-items: center;
+		justify-content: center;
+		overflow: hidden;
+	}
+	.score-bar {
+		width: 100%;
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 18px;
+	}
+	.title {
+		font-size: 22px;
+		font-weight: bold;
+	}
+	.score {
+		width: 72px;
+		font-size: 18px;
+		font-weight: bold;
+		text-align: center;
+	}
+	.setup-panel,
+	.center-panel,
+	.play-field {
+		width: 100%;
+		align-items: center;
+	}
+	.rep-row,
+	.switch-row,
+	.click-row {
+		width: 100%;
+		flex-direction: row;
+		justify-content: center;
+		align-items: center;
+	}
+	.rep-card {
+		width: 132px;
+		height: 88px;
+		border-radius: 18px;
+		align-items: center;
+		justify-content: center;
+		margin: 0 8px 12px 8px;
+	}
+	.rep-label {
+		font-size: 14px;
+		color: #ffffff;
+	}
+	.rep-name {
+		font-size: 18px;
+		font-weight: bold;
+		color: #ffffff;
+		margin-top: 4px;
+	}
+	.switch-row {
+		margin-top: 10px;
+	}
+	.switch-item {
+		width: 124px;
+		height: 44px;
+		border-radius: 14px;
+		align-items: center;
+		justify-content: center;
+		margin: 0 5px;
+	}
+	.switch-text {
+		font-size: 16px;
+		font-weight: bold;
+	}
+	.countdown {
+		font-size: 88px;
+		font-weight: bold;
+	}
+	.timer-row {
+		height: 34px;
+		justify-content: center;
+		align-items: center;
+	}
+	.timer {
+		font-size: 18px;
+		font-weight: bold;
+	}
+	.tap-area-row {
+		position: relative;
+		width: 100%;
+		height: 360px;
+		flex-direction: row;
+		border-radius: 18px;
+		overflow: hidden;
+		margin-top: 10px;
+	}
+	.tap-half {
+		width: 50%;
+		height: 360px;
+		align-items: center;
+		justify-content: center;
+	}
+	.tap-label {
+		font-size: 26px;
+		font-weight: bold;
+		color: #ffffff;
+	}
+	.center-line {
+		position: absolute;
+		left: 50%;
+		top: 0;
+		width: 4px;
+		height: 360px;
+		margin-left: -2px;
+	}
+	.rope {
+		position: absolute;
+		left: 50%;
+		top: 168px;
+		width: 260px;
+		height: 20px;
+		margin-left: -130px;
+		border-radius: 10px;
+		background-color: #ffffff;
+		align-items: center;
+		justify-content: center;
+	}
+	.rope-knot {
+		width: 34px;
+		height: 34px;
+		border-radius: 17px;
+	}
+	.click-row {
+		justify-content: space-between;
+		padding: 0 48px;
+		margin-top: 10px;
+	}
+	.click-text {
+		font-size: 20px;
+		font-weight: bold;
+	}
+	.winner {
+		font-size: 34px;
+		font-weight: bold;
+		margin-bottom: 12px;
+	}
+	.loser {
+		font-size: 20px;
+		font-weight: bold;
+		margin-bottom: 10px;
+	}
+</style>

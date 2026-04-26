@@ -59,11 +59,14 @@
 			return
 		}
 		const pathMap : Record<GameId, string> = {
-			'bomb':        '/pages/game/bomb/index',
-			'crocodile':   '/pages/game/crocodile/index',
-			'horse-race':  '/pages/game/horse-race/index',
-			'wheel':       '/pages/game/wheel/index',
-			'reaction':    '/pages/game/reaction/index'
+			'bomb':             '/pages/game/bomb/index',
+			'number-bomb':      '/pages/game/number-bomb/index',
+			'crocodile':        '/pages/game/crocodile/index',
+			'horse-race':       '/pages/game/horse-race/index',
+			'reaction':         '/pages/game/reaction/index',
+			'tug-of-war':       '/pages/game/tug-of-war/index',
+			'finger-twister':   '/pages/game/finger-twister/index',
+			'wheel':            '/pages/game/wheel/index'
 		}
 		uni.redirectTo({ url: pathMap[id] })
 	}
