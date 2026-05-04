@@ -18,9 +18,6 @@
 		<view v-else-if="snap?.state === 'prompt'" class="task-layer">
 			<text class="task-title" :style="taskTitleStyle">{{ taskText(snap?.currentTask) }}</text>
 			<text class="task-time" :style="mutedStyle">{{ taskTimeText }}</text>
-			<view v-if="snap?.currentTask != null" class="target-circle" :style="taskCircleStyle(snap?.currentTask!)">
-				<text class="target-text">{{ (snap?.currentTask?.fingerNumber ?? 1) }}</text>
-			</view>
 		</view>
 
 		<view v-else-if="snap?.state === 'holding'" class="center-panel">
@@ -40,6 +37,12 @@
 				:style="assignmentStyle(item)"
 			>
 				<text class="assignment-text">{{ item.playerIndex + 1 }}-{{ item.fingerNumber }}</text>
+			</view>
+		</view>
+
+		<view v-if="snap?.state === 'prompt' && snap?.currentTask != null" class="target-layer">
+			<view class="target-circle" :style="taskCircleStyle(snap?.currentTask!)">
+				<text class="target-text">{{ (snap?.currentTask?.fingerNumber ?? 1) }}</text>
 			</view>
 		</view>
 
@@ -347,6 +350,16 @@
 		right: 0;
 		bottom: 0;
 		z-index: 10;
+		pointer-events: none;
+	}
+	.target-layer {
+		position: absolute;
+		left: 0;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 20;
+		pointer-events: none;
 	}
 	.assignment-ring {
 		position: absolute;
