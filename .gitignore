@@ -26,3 +26,6 @@ coverage/
 
 # git worktree 本地产物
 .worktrees/
+
+# 鸿蒙签名配置（含本地证书路径与密钥密码，禁止入库）
+harmony-configs/
